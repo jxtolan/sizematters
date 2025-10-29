@@ -104,6 +104,20 @@ class NansenConfig(BaseModel):
 class BioUpdate(BaseModel):
     bio: str
 
+# Demo trader addresses (backup if database is empty)
+DEMO_TRADERS = [
+    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE",
+    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",
+    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN",
+    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
+    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
+    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S",
+    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w",
+    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV",
+    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN"
+]
+
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
     """Get all trader wallet addresses from the database"""
@@ -112,6 +126,11 @@ def get_all_trader_wallets():
     c.execute("SELECT wallet_address FROM users")
     wallets = [row[0] for row in c.fetchall()]
     conn.close()
+    
+    # If database is empty or only has 1 user, return demo traders
+    if len(wallets) <= 1:
+        return DEMO_TRADERS
+    
     return wallets
 
 # Store Nansen API key - Load from environment variable

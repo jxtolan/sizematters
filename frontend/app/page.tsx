@@ -75,11 +75,18 @@ export default function Home() {
       const response = await axios.get(
         `${API_BASE}/api/profiles/${publicKey.toString()}`
       )
-      setProfiles(response.data.profiles)
-      setCurrentProfileIndex(0)
+      console.log('Loaded profiles:', response.data.profiles)
+      if (response.data.profiles && response.data.profiles.length > 0) {
+        setProfiles(response.data.profiles)
+        setCurrentProfileIndex(0)
+      } else {
+        toast.error('No trader profiles available yet. Check back soon! 🚀')
+        setProfiles([])
+      }
     } catch (error) {
-      toast.error('Failed to load profiles')
+      toast.error('Failed to connect to API. Please try again.')
       console.error('Error loading profiles:', error)
+      setProfiles([])
     } finally {
       setLoading(false)
     }
