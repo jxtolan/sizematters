@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import sqlite3
 import uuid
 from collections import defaultdict
+import os
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -109,8 +110,8 @@ def get_all_trader_wallets():
     conn.close()
     return wallets
 
-# Store Nansen API key (in production, use environment variables)
-nansen_api_key = ""
+# Store Nansen API key - Load from environment variable
+nansen_api_key = os.getenv("NANSEN_API_KEY", "")
 
 @app.post("/api/config/nansen")
 async def set_nansen_config(config: NansenConfig):
