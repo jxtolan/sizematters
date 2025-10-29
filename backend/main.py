@@ -30,6 +30,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (id TEXT PRIMARY KEY,
                   wallet_address TEXT UNIQUE NOT NULL,
+                  bio TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     # Swipes table
@@ -100,6 +101,9 @@ class MessageCreate(BaseModel):
 class NansenConfig(BaseModel):
     api_key: str
 
+class BioUpdate(BaseModel):
+    bio: str
+
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
     """Get all trader wallet addresses from the database"""
@@ -143,6 +147,19 @@ async def create_user(user: UserCreate):
     
     return {"user_id": user_id, "wallet_address": user.wallet_address, "exists": False}
 
+@app.put("/api/users/{wallet_address}/bio")
+async def update_user_bio(wallet_address: str, bio_data: BioUpdate):
+    """Update user's bio"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    
+    c.execute("UPDATE users SET bio = ? WHERE wallet_address = ?", 
+              (bio_data.bio, wallet_address))
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "message": "Bio updated"}
+
 @app.get("/api/profiles/{wallet_address}")
 async def get_profiles(wallet_address: str):
     """Get profiles to swipe through (excluding already swiped wallets)"""
@@ -169,10 +186,19 @@ async def get_profiles(wallet_address: str):
         pnl_data = get_nansen_pnl(wallet)
         balance_data = get_nansen_balance(wallet)
         
+        # Get bio from database
+        conn = sqlite3.connect('smartmoney.db')
+        c = conn.cursor()
+        c.execute("SELECT bio FROM users WHERE wallet_address = ?", (wallet,))
+        bio_result = c.fetchone()
+        conn.close()
+        bio = bio_result[0] if bio_result else None
+        
         profiles.append({
             "wallet_address": wallet,
             "pnl_summary": pnl_data,
-            "balance": balance_data
+            "balance": balance_data,
+            "bio": bio
         })
     
     return {"profiles": profiles}

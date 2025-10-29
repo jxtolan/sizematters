@@ -5,7 +5,7 @@ import { WalletProvider } from '@/components/WalletProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Smart Money Tinder',
+  title: 'SizeMatters',
   description: 'Connect with successful Solana traders',
 }
 

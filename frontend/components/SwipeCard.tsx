@@ -8,6 +8,7 @@ interface Profile {
   wallet_address: string
   pnl_summary: any
   balance: any
+  bio?: string
 }
 
 interface SwipeCardProps {
@@ -148,6 +149,13 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
               {profile.wallet_address}
             </p>
           </div>
+
+          {/* Bio */}
+          {profile.bio && (
+            <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-green-900/30 p-4 rounded-2xl border border-gray-700">
+              <p className="text-gray-300 italic">"{profile.bio}"</p>
+            </div>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
