@@ -63,23 +63,17 @@ def init_db():
 
 init_db()
 
-# Demo trader bios mapping
+# Demo trader bios mapping - REAL trader addresses with varied formatting
 DEMO_TRADER_BIOS = {
-    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU": "🎯 Degen since '21 | Made 420% on BONK before it was cool | Only trade in crocs | YOLO is my risk management",
-    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE": "📊 Quant trader who got rugged once and never recovered emotionally | 200 IQ, 0 social skills | Will marry whoever invented MEV",
-    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr": "💎 Diamond hands or food stamps | Lost my house keys but never my seed phrase | Survived 3 bear markets and 1 divorce",
-    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN": "🚀 If it doesn't 100x in 24hrs I'm not interesting | Sleep is for people without alpha | My therapist told me to log off",
-    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1": "🧙‍♂️ Wizard of the orderbook | I see liquidity pools in my dreams | Once made $50k in 10 mins then lost it in 11",
-    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ": "🐋 Not a whale but I identify as one | Bot operator with feelings | Married to volatility, divorced from stability",
-    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S": "⚡ Speed trader | My Wi-Fi is faster than your reflexes | Haven't touched grass since Jupiter launched | Living on energy drinks",
-    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w": "🎲 Professional gambler who found Solana | Somehow up 300% YTD | My secret? Being too dumb to panic sell",
-    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV": "🌙 Night owl trader | Best trades happen at 3am | Coffee-powered memecoin connoisseur | Trust me bro is my DD",
-    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN": "🏄 Riding waves since $SOL was $8 | Surf by day, trade by night | Looking for someone to explain what 'risk' means",
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": "💰 USDC maxi with trust issues | Stablecoin gang | Once saw my portfolio go red and had an existential crisis",
-    "So11111111111111111111111111111111111111112": "☀️ Literal SOL | I AM the token | Dating me is basically insider trading | Probably not legal but definitely cool",
-    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263": "🎰 DeFi degen | Yield farming since it was called ponzinomics | Lost count of my rugs | Still here, still bullish",
-    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So": "🌊 Liquid staking enthusiast | My personality is as liquid as my assets | Validator simp | DeFi summer forever",
-    "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr": "🔥 Got burned on Luna, learned nothing | Leverage is my love language | Risk assessment? Never heard of her"
+    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc": "🎯 degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
+    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh": "Quant trader 📊 Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
+    "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i": "💎 DIAMOND HANDS OR FOOD STAMPS 💎\nLost my house keys but never my seed phrase\nSurvived: 3 bear markets, 1 divorce",
+    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT": "If it doesn't 100x in 24hrs I'm not interested 🚀\n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
+    "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy": "🧙‍♂️ wizard of the orderbook\n\ni see liquidity pools in my dreams\n\nonce made $50k in 10 mins then lost it in 11 lol",
+    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR": "not a whale but I identify as one 🐋 | bot operator with feelings | married to volatility, divorced from stability",
+    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7": "⚡️ SPEED TRADER ⚡️\nMy Wi-Fi is faster than your reflexes\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
+    "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb": "Professional gambler who found Solana 🎲 Somehow up 300% YTD?? My secret? Being too dumb to panic sell 🤷",
+    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn": "🌙 night owl trader\nbest trades happen at 3am\ncoffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
 }
 
 # Auto-seed demo traders on startup if database is empty
@@ -154,23 +148,17 @@ class NansenConfig(BaseModel):
 class BioUpdate(BaseModel):
     bio: str
 
-# Demo trader addresses (backup if database is empty) - These are REAL addresses
+# Demo trader addresses (backup if database is empty) - REAL trader addresses
 DEMO_TRADERS = [
-    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",  # The BONK degen
-    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE",  # Quant trader
-    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",  # Diamond hands
-    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN",  # 100x chaser
-    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",  # Orderbook wizard
-    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",  # Bot operator
-    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S",  # Speed trader
-    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w",  # Professional gambler
-    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV",  # Night owl
-    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN",  # Surfer trader
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",  # USDC maxi
-    "So11111111111111111111111111111111111111112",  # Literal SOL
-    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",  # DeFi degen
-    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",  # Liquid staking
-    "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"   # Luna survivor
+    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc",
+    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
+    "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
+    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
+    "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
+    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
+    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
+    "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
+    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn"
 ]
 
 # Get all registered trader wallets from database
