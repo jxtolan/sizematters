@@ -63,6 +63,56 @@ def init_db():
 
 init_db()
 
+# Demo trader bios mapping
+DEMO_TRADER_BIOS = {
+    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU": "🎯 Degen since '21 | Made 420% on BONK before it was cool | Only trade in crocs | YOLO is my risk management",
+    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE": "📊 Quant trader who got rugged once and never recovered emotionally | 200 IQ, 0 social skills | Will marry whoever invented MEV",
+    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr": "💎 Diamond hands or food stamps | Lost my house keys but never my seed phrase | Survived 3 bear markets and 1 divorce",
+    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN": "🚀 If it doesn't 100x in 24hrs I'm not interesting | Sleep is for people without alpha | My therapist told me to log off",
+    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1": "🧙‍♂️ Wizard of the orderbook | I see liquidity pools in my dreams | Once made $50k in 10 mins then lost it in 11",
+    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ": "🐋 Not a whale but I identify as one | Bot operator with feelings | Married to volatility, divorced from stability",
+    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S": "⚡ Speed trader | My Wi-Fi is faster than your reflexes | Haven't touched grass since Jupiter launched | Living on energy drinks",
+    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w": "🎲 Professional gambler who found Solana | Somehow up 300% YTD | My secret? Being too dumb to panic sell",
+    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV": "🌙 Night owl trader | Best trades happen at 3am | Coffee-powered memecoin connoisseur | Trust me bro is my DD",
+    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN": "🏄 Riding waves since $SOL was $8 | Surf by day, trade by night | Looking for someone to explain what 'risk' means",
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": "💰 USDC maxi with trust issues | Stablecoin gang | Once saw my portfolio go red and had an existential crisis",
+    "So11111111111111111111111111111111111111112": "☀️ Literal SOL | I AM the token | Dating me is basically insider trading | Probably not legal but definitely cool",
+    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263": "🎰 DeFi degen | Yield farming since it was called ponzinomics | Lost count of my rugs | Still here, still bullish",
+    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So": "🌊 Liquid staking enthusiast | My personality is as liquid as my assets | Validator simp | DeFi summer forever",
+    "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr": "🔥 Got burned on Luna, learned nothing | Leverage is my love language | Risk assessment? Never heard of her"
+}
+
+# Auto-seed demo traders on startup if database is empty
+def auto_seed_demo_traders():
+    """Automatically seed demo traders on startup if database has no users"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    
+    # Check if we have any users
+    c.execute("SELECT COUNT(*) FROM users")
+    user_count = c.fetchone()[0]
+    
+    if user_count == 0:
+        print("🌱 Database is empty! Auto-seeding demo traders...")
+        for address, bio in DEMO_TRADER_BIOS.items():
+            try:
+                user_id = str(uuid.uuid4())
+                c.execute("INSERT INTO users (id, wallet_address, bio) VALUES (?, ?, ?)",
+                         (user_id, address, bio))
+                print(f"   ✅ Added: {address[:8]}...")
+            except Exception as e:
+                print(f"   ⚠️  Skipped {address[:8]}...: {str(e)}")
+        
+        conn.commit()
+        print(f"🎉 Auto-seed complete! Added {len(DEMO_TRADER_BIOS)} demo traders")
+    else:
+        print(f"✅ Database already has {user_count} users. Skipping auto-seed.")
+    
+    conn.close()
+
+# Run auto-seed on startup
+auto_seed_demo_traders()
+
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
