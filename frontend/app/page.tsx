@@ -194,36 +194,38 @@ export default function Home() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-8 rounded-2xl max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4 text-white">Settings</h2>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">
-                Nansen API Key (Optional)
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+          <div className="glass p-8 rounded-3xl max-w-md w-full mx-4 border-2 border-cyan-500/30 glow-cyan">
+            <h2 className="text-3xl font-bold mb-6 gradient-text flex items-center gap-2">
+              <span className="text-4xl">⚙️</span> Settings
+            </h2>
+            <div className="mb-6">
+              <label className="block text-sm text-gray-300 mb-3 font-semibold">
+                🔑 Nansen API Key (Optional)
               </label>
               <input
                 type="password"
                 value={nansenApiKey}
                 onChange={(e) => setNansenApiKey(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
-                placeholder="Enter your Nansen API key"
+                className="w-full px-4 py-3 glass border-2 border-purple-500/50 rounded-xl text-white focus:outline-none focus:border-cyan-500 focus:glow-cyan transition"
+                placeholder="Enter your Nansen API key..."
               />
-              <p className="text-xs text-gray-500 mt-2">
-                Leave empty to use mock data for demo
+              <p className="text-xs text-gray-400 mt-2">
+                💡 Leave empty to use mock data for demo
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={saveNansenApiKey}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-green-500 py-2 rounded-lg font-semibold hover:opacity-90 transition"
+                className="flex-1 bg-gradient-to-r from-purple-500 to-cyan-500 py-3 rounded-xl font-bold hover:scale-105 glow-purple transition-all"
               >
-                Save
+                💾 Save
               </button>
               <button
                 onClick={() => setShowSettings(false)}
-                className="flex-1 bg-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
+                className="flex-1 glass py-3 rounded-xl font-bold hover:glow-red border-2 border-gray-700 transition-all"
               >
-                Cancel
+                ✖️ Close
               </button>
             </div>
           </div>
