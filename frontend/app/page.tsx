@@ -141,23 +141,25 @@ export default function Home() {
 
   if (!connected) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-green-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-green-900 relative overflow-hidden">
         <Toaster />
-        <div className="text-center">
+        <div className="text-center relative z-10">
           <div className="mb-8">
-            <FiHeart className="text-8xl text-pink-500 mx-auto mb-4 animate-pulse" />
-            <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent">
+            <div className="text-9xl mb-6 animate-pulse">💎</div>
+            <h1 className="text-7xl font-bold mb-6 gradient-text">
               SizeMatters
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
-              Connect with successful Solana traders 🚀
+            <p className="text-2xl text-gray-200 mb-8 font-medium">
+              Where whales flirt through PnL 🐋✨
             </p>
           </div>
-          <WalletMultiButton />
-          <div className="mt-8 text-sm text-gray-400">
-            <p>✨ Swipe through trader profiles</p>
-            <p>📊 See real-time PnL & balance data</p>
-            <p>💬 Chat with matched traders</p>
+          <div className="mb-8">
+            <WalletMultiButton />
+          </div>
+          <div className="mt-8 space-y-3 text-gray-300 glass p-6 rounded-2xl inline-block border border-purple-500/30">
+            <p className="flex items-center gap-3 text-lg"><span className="text-2xl">🔥</span> Swipe through elite traders</p>
+            <p className="flex items-center gap-3 text-lg"><span className="text-2xl">📊</span> Real-time Nansen PnL data</p>
+            <p className="flex items-center gap-3 text-lg"><span className="text-2xl">💬</span> Connect & strategize together</p>
           </div>
         </div>
       </div>
@@ -169,11 +171,11 @@ export default function Home() {
       <Toaster />
       
       {/* Header */}
-      <div className="bg-black bg-opacity-50 backdrop-blur-md border-b border-gray-800">
+      <div className="glass border-b-2 border-purple-500/30 relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <FiHeart className="text-3xl text-pink-500" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">💎</span>
+            <h1 className="text-3xl font-bold gradient-text">
               SizeMatters
             </h1>
           </div>

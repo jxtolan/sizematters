@@ -73,7 +73,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
   return (
     <div className="relative">
       <motion.div
-        className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl overflow-hidden shadow-2xl border border-gray-700"
+        className="glass rounded-3xl overflow-hidden shadow-2xl border-2 border-purple-500/30"
         style={{ x, rotate, opacity }}
         animate={controls}
         drag="x"
@@ -152,38 +152,38 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
 
           {/* Bio */}
           {profile.bio && (
-            <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-green-900/30 p-4 rounded-2xl border border-gray-700">
-              <p className="text-gray-300 italic">"{profile.bio}"</p>
+            <div className="mb-6 glass p-4 rounded-2xl border border-purple-500/30 glow-purple">
+              <p className="text-gray-200 italic">💬 "{profile.bio}"</p>
             </div>
           )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* PnL Card */}
-            <div className="bg-gradient-to-br from-purple-900 to-purple-800 p-5 rounded-2xl">
+            <div className="glass p-5 rounded-2xl border border-purple-500/50 glow-purple">
               <div className="flex items-center gap-2 mb-2">
                 <FiTrendingUp className="text-purple-300" />
-                <p className="text-xs text-purple-300 font-semibold">90D PnL</p>
+                <p className="text-xs text-purple-300 font-semibold">📈 90D PnL</p>
               </div>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold gradient-text">
                 {formatCurrency(profile.pnl_summary.total_pnl || 0)}
               </p>
               <p className="text-sm text-purple-200 mt-1">
-                {profile.pnl_summary.pnl_percentage || 0}% return
+                {profile.pnl_summary.pnl_percentage || 0}% return 🚀
               </p>
             </div>
 
             {/* Balance Card */}
-            <div className="bg-gradient-to-br from-green-900 to-green-800 p-5 rounded-2xl">
+            <div className="glass p-5 rounded-2xl border border-green-500/50 glow-green">
               <div className="flex items-center gap-2 mb-2">
                 <FiDollarSign className="text-green-300" />
-                <p className="text-xs text-green-300 font-semibold">Balance</p>
+                <p className="text-xs text-green-300 font-semibold">💰 Balance</p>
               </div>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold gradient-text">
                 {formatCurrency(profile.balance.total_balance_usd || 0)}
               </p>
               <p className="text-sm text-green-200 mt-1">
-                {profile.balance.sol_balance || 0} SOL
+                {profile.balance.sol_balance || 0} SOL ⚡
               </p>
             </div>
           </div>
@@ -235,21 +235,21 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
       <div className="flex justify-center gap-6 mt-8">
         <motion.button
           onClick={() => handleButtonSwipe('left')}
-          className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition"
-          whileHover={{ scale: 1.1, rotate: -10 }}
-          whileTap={{ scale: 0.9, rotate: -20 }}
+          className="bg-red-500 hover:bg-red-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition glow-red"
+          whileHover={{ scale: 1.2, rotate: -10 }}
+          whileTap={{ scale: 0.85, rotate: -20 }}
           disabled={exitDirection !== null}
         >
-          <FiX className="text-3xl" />
+          <span className="text-4xl">❌</span>
         </motion.button>
         <motion.button
           onClick={() => handleButtonSwipe('right')}
-          className="bg-green-500 hover:bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition"
-          whileHover={{ scale: 1.1, rotate: 10 }}
-          whileTap={{ scale: 0.9, rotate: 20 }}
+          className="bg-green-500 hover:bg-green-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition glow-green pulse-glow"
+          whileHover={{ scale: 1.2, rotate: 10 }}
+          whileTap={{ scale: 0.85, rotate: 20 }}
           disabled={exitDirection !== null}
         >
-          <FiHeart className="text-3xl" />
+          <span className="text-4xl">🔥</span>
         </motion.button>
       </div>
     </div>
