@@ -11,11 +11,11 @@ from collections import defaultdict
 
 app = FastAPI(title="Smart Money Tinder API")
 
-# CORS middleware
+# CORS middleware - Allow all origins for demo/hackathon
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins (Vercel, localhost, etc.)
+    allow_credentials=False,  # Must be False when allow_origins is ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
