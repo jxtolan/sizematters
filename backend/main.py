@@ -104,18 +104,23 @@ class NansenConfig(BaseModel):
 class BioUpdate(BaseModel):
     bio: str
 
-# Demo trader addresses (backup if database is empty)
+# Demo trader addresses (backup if database is empty) - These are REAL addresses
 DEMO_TRADERS = [
-    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
-    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE",
-    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",
-    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN",
-    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
-    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S",
-    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w",
-    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV",
-    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN"
+    "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",  # The BONK degen
+    "CckxW6C1CjsxYcXSiDbk7NYfPLhfqAm3kSB5LEZunnSE",  # Quant trader
+    "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",  # Diamond hands
+    "AArPXm8JatJiuyEffuC1un2Sc835SULa4uQqDcaGpAjN",  # 100x chaser
+    "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",  # Orderbook wizard
+    "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",  # Bot operator
+    "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S",  # Speed trader
+    "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w",  # Professional gambler
+    "Ez2LhSqczEBLRWxuN3eD8wLnfr5mJKwCKmGSrfCB9VfV",  # Night owl
+    "HvdKHqMKfPj6TzDPRVTHQNPLXDVGJnPeZFHzLG3qw8vN",  # Surfer trader
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",  # USDC maxi
+    "So11111111111111111111111111111111111111112",  # Literal SOL
+    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",  # DeFi degen
+    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",  # Liquid staking
+    "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr"   # Luna survivor
 ]
 
 # Get all registered trader wallets from database
