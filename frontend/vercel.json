@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL (e.g., https://your-backend.railway.app)",
+      "required": true
+    },
+    "NEXT_PUBLIC_SOLANA_NETWORK": {
+      "description": "Solana network (mainnet-beta, devnet, or testnet)",
+      "value": "mainnet-beta"
+    }
+  }
+}
+
