@@ -65,15 +65,15 @@ init_db()
 
 # Demo trader bios mapping - REAL trader addresses with varied formatting
 DEMO_TRADER_BIOS = {
-    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc": "🎯 degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
-    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh": "Quant trader 📊 Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
+    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
+    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh": "Quant trader, Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
     "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i": "💎 DIAMOND HANDS OR FOOD STAMPS 💎\nLost my house keys but never my seed phrase\nSurvived: 3 bear markets, 1 divorce",
-    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT": "If it doesn't 100x in 24hrs I'm not interested 🚀\n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
+    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT": "If it doesn't 100x in 24hrs I'm not interested \n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
     "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy": "🧙‍♂️ wizard of the orderbook\n\ni see liquidity pools in my dreams\n\nonce made $50k in 10 mins then lost it in 11 lol",
-    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR": "not a whale but I identify as one 🐋 | bot operator with feelings | married to volatility, divorced from stability",
-    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7": "⚡️ SPEED TRADER ⚡️\nMy Wi-Fi is faster than your reflexes\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
+    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR": "not a whale but I identify as one | bot operator with feelings | married to volatility, divorced from stability",
+    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7": "SPEED TRADER\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
     "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb": "Professional gambler who found Solana 🎲 Somehow up 300% YTD?? My secret? Being too dumb to panic sell 🤷",
-    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn": "🌙 night owl trader\nbest trades happen at 3am\ncoffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
+    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn": "night owl trader\nbest trades happen at 3am coffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
 }
 
 # Auto-seed demo traders on startup if database is empty
@@ -178,6 +178,10 @@ def get_all_trader_wallets():
 
 # Store Nansen API key - Load from environment variable
 nansen_api_key = os.getenv("NANSEN_API_KEY", "")
+if nansen_api_key:
+    print(f"✅ Nansen API key loaded: {nansen_api_key[:8]}...{nansen_api_key[-4:]}")
+else:
+    print("⚠️ WARNING: No NANSEN_API_KEY found! Using mock data.")
 
 @app.post("/api/config/nansen")
 async def set_nansen_config(config: NansenConfig):
@@ -268,6 +272,7 @@ async def get_profiles(wallet_address: str):
 def get_nansen_pnl(wallet_address: str):
     """Fetch PnL summary from Nansen API"""
     if not nansen_api_key:
+        print(f"⚠️ No Nansen API key - using mock data for {wallet_address[:8]}...")
         # Return mock data for demo
         return {
             "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
@@ -281,6 +286,8 @@ def get_nansen_pnl(wallet_address: str):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=90)
         
+        print(f"📊 Fetching Nansen PnL for {wallet_address[:8]}...")
+        
         response = requests.post(
             "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
             headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
@@ -292,19 +299,38 @@ def get_nansen_pnl(wallet_address: str):
                     "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
                 }
             }),
-            timeout=5
+            timeout=10
         )
         
+        print(f"📊 Nansen PnL Response: Status {response.status_code}")
+        
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            print(f"✅ Nansen PnL Data: {data}")
+            return data
         else:
-            return {"error": "Failed to fetch PnL data"}
+            print(f"❌ Nansen PnL Error: {response.status_code} - {response.text}")
+            # Return mock data on error
+            return {
+                "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
+                "pnl_percentage": round(10 + (hash(wallet_address) % 100), 2),
+                "win_rate": round(50 + (hash(wallet_address) % 40), 2),
+                "total_trades": 100 + (hash(wallet_address) % 500)
+            }
     except Exception as e:
-        return {"error": str(e)}
+        print(f"❌ Exception fetching Nansen PnL: {str(e)}")
+        # Return mock data on exception
+        return {
+            "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
+            "pnl_percentage": round(10 + (hash(wallet_address) % 100), 2),
+            "win_rate": round(50 + (hash(wallet_address) % 40), 2),
+            "total_trades": 100 + (hash(wallet_address) % 500)
+        }
 
 def get_nansen_balance(wallet_address: str):
     """Fetch current balance from Nansen API"""
     if not nansen_api_key:
+        print(f"⚠️ No Nansen API key - using mock balance for {wallet_address[:8]}...")
         # Return mock data for demo
         return {
             "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
@@ -313,6 +339,8 @@ def get_nansen_balance(wallet_address: str):
         }
     
     try:
+        print(f"💰 Fetching Nansen balance for {wallet_address[:8]}...")
+        
         response = requests.post(
             "https://api.nansen.ai/api/v1/profiler/address/current-balance",
             headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
@@ -325,15 +353,31 @@ def get_nansen_balance(wallet_address: str):
                     "per_page": 10
                 }
             }),
-            timeout=5
+            timeout=10
         )
         
+        print(f"💰 Nansen Balance Response: Status {response.status_code}")
+        
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            print(f"✅ Nansen Balance Data: {data}")
+            return data
         else:
-            return {"error": "Failed to fetch balance data"}
+            print(f"❌ Nansen Balance Error: {response.status_code} - {response.text}")
+            # Return mock data on error
+            return {
+                "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
+                "sol_balance": round(50 + (hash(wallet_address[:8]) % 500), 2),
+                "token_count": 5 + (hash(wallet_address[:6]) % 20)
+            }
     except Exception as e:
-        return {"error": str(e)}
+        print(f"❌ Exception fetching Nansen balance: {str(e)}")
+        # Return mock data on exception
+        return {
+            "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
+            "sol_balance": round(50 + (hash(wallet_address[:8]) % 500), 2),
+            "token_count": 5 + (hash(wallet_address[:6]) % 20)
+        }
 
 @app.post("/api/swipe")
 async def swipe(swipe_action: SwipeAction):

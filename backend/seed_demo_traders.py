@@ -11,11 +11,11 @@ from datetime import datetime
 DEMO_TRADERS = [
     {
         "address": "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc",
-        "bio": "🎯 degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀"
+        "bio": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀"
     },
     {
         "address": "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
-        "bio": "Quant trader 📊 Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr"
+        "bio": "Quant trader, Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr"
     },
     {
         "address": "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
@@ -23,7 +23,7 @@ DEMO_TRADERS = [
     },
     {
         "address": "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
-        "bio": "If it doesn't 100x in 24hrs I'm not interested 🚀\n\nSleep is for people without alpha. My therapist told me to log off (I didn't)"
+        "bio": "If it doesn't 100x in 24hrs I'm not interested \n\nSleep is for people without alpha. My therapist told me to log off (I didn't)"
     },
     {
         "address": "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
@@ -31,11 +31,11 @@ DEMO_TRADERS = [
     },
     {
         "address": "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
-        "bio": "not a whale but I identify as one 🐋 | bot operator with feelings | married to volatility, divorced from stability"
+        "bio": "not a whale but I identify as one | bot operator with feelings | married to volatility, divorced from stability"
     },
     {
         "address": "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
-        "bio": "⚡️ SPEED TRADER ⚡️\nMy Wi-Fi is faster than your reflexes\nHaven't touched grass since Jupiter launched\n(living on energy drinks)"
+        "bio": "SPEED TRADER\nHaven't touched grass since Jupiter launched\n(living on energy drinks)"
     },
     {
         "address": "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
@@ -43,7 +43,7 @@ DEMO_TRADERS = [
     },
     {
         "address": "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn",
-        "bio": "🌙 night owl trader\nbest trades happen at 3am\ncoffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
+        "bio": "night owl trader\nbest trades happen at 3am coffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
     }
 ]
 
