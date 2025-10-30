@@ -233,18 +233,22 @@ DEMO_TRADERS = [
 
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
-    """Get all trader wallet addresses from the database"""
+    """Get all trader wallet addresses from the database (REAL USERS FIRST, then demos)"""
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
-    c.execute("SELECT wallet_address FROM users")
-    wallets = [row[0] for row in c.fetchall()]
+    c.execute("SELECT wallet_address FROM users ORDER BY created_at DESC")
+    real_wallets = [row[0] for row in c.fetchall()]
     conn.close()
     
-    # If database is empty or only has 1 user, return demo traders
-    if len(wallets) <= 1:
-        return DEMO_TRADERS
+    # Remove demo traders from real_wallets (in case they were manually added)
+    real_users_only = [w for w in real_wallets if w not in DEMO_TRADERS]
     
-    return wallets
+    # ALWAYS show real users first, then demo traders as filler
+    all_wallets = real_users_only + DEMO_TRADERS
+    
+    print(f"👥 Total profiles: {len(real_users_only)} real users + {len(DEMO_TRADERS)} demos")
+    
+    return all_wallets
 
 # Store Nansen API key - Load from environment variable
 nansen_api_key = os.getenv("NANSEN_API_KEY", "")
@@ -322,10 +326,28 @@ async def get_profiles(wallet_address: str):
     print(f"📊 Cache status: {len(nansen_cache)} wallets cached")
     
     profiles = []
-    for wallet in available_wallets[:10]:  # Return up to 10 profiles
+    is_demo = lambda w: w in DEMO_TRADERS
+    
+    for wallet in available_wallets[:20]:  # Check more to account for skipped profiles
+        if len(profiles) >= 10:  # Stop once we have 10 valid profiles
+            break
+            
         # Get Nansen data
         pnl_data = get_nansen_pnl(wallet)
         balance_data = get_nansen_balance(wallet)
+        
+        # For REAL users (not demos), skip if no valid data
+        if not is_demo(wallet):
+            # Check if we have real Nansen data (not mock/error data)
+            has_real_pnl = (
+                pnl_data.get("total_trades", 0) > 0 and 
+                "time_period" in pnl_data
+            )
+            has_real_balance = balance_data.get("total_balance_usd", 0) > 0
+            
+            if not (has_real_pnl or has_real_balance):
+                print(f"⚠️ Skipping real user {wallet[:8]}... - No valid Nansen data")
+                continue
         
         # Get bio from database
         conn = sqlite3.connect('smartmoney.db')
@@ -339,9 +361,11 @@ async def get_profiles(wallet_address: str):
             "wallet_address": wallet,
             "pnl_summary": pnl_data,
             "balance": balance_data,
-            "bio": bio
+            "bio": bio,
+            "is_demo": is_demo(wallet)
         })
     
+    print(f"📊 Returning {len(profiles)} valid profiles")
     return {"profiles": profiles}
 
 def get_nansen_pnl(wallet_address: str):
