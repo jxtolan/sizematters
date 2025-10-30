@@ -1,8 +1,9 @@
 'use client'
 
 import { motion, useMotionValue, useTransform, useAnimation } from 'framer-motion'
-import { FiX, FiHeart, FiTrendingUp, FiDollarSign } from 'react-icons/fi'
+import { FiX, FiHeart, FiTrendingUp, FiDollarSign, FiCopy, FiCheck } from 'react-icons/fi'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 interface Profile {
   wallet_address: string
@@ -21,7 +22,19 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
   const rotate = useTransform(x, [-200, 200], [-25, 25])
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0])
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
+  const [copied, setCopied] = useState(false)
   const controls = useAnimation()
+
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(profile.wallet_address)
+      setCopied(true)
+      toast.success('Address copied!')
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      toast.error('Failed to copy')
+    }
+  }
 
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x > 100) {
@@ -143,11 +156,19 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
           {/* Wallet Address */}
           <div className="mb-6">
             <h2 className="text-3xl font-bold text-white mb-2">
-              Trader {formatWallet(profile.wallet_address)}
+              Trader {profile.wallet_address.slice(0, 4)}...{profile.wallet_address.slice(-4)}
             </h2>
-            <p className="text-sm text-gray-400 font-mono break-all">
-              {profile.wallet_address}
-            </p>
+            <button
+              onClick={handleCopyAddress}
+              className="flex items-center gap-2 text-sm text-gray-400 font-mono hover:text-purple-400 transition group"
+            >
+              <span className="break-all">{profile.wallet_address}</span>
+              {copied ? (
+                <FiCheck className="text-green-400 flex-shrink-0" />
+              ) : (
+                <FiCopy className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition" />
+              )}
+            </button>
           </div>
 
           {/* Bio */}
@@ -163,10 +184,12 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
             <div className="glass p-5 rounded-2xl border border-purple-500/50 glow-purple">
               <div className="flex items-center gap-2 mb-2">
                 <FiTrendingUp className="text-purple-300" />
-                <p className="text-xs text-purple-300 font-semibold">📈 90D PnL</p>
+                <p className="text-xs text-purple-300 font-semibold">
+                  📈 {profile.pnl_summary.time_period || '90D'} PnL
+                </p>
               </div>
               <p className="text-2xl font-bold gradient-text">
-                {formatCurrency(profile.pnl_summary.total_pnl || 0)}
+                {profile.pnl_summary.total_pnl_formatted || '$0'}
               </p>
               <p className="text-sm text-purple-200 mt-1">
                 {profile.pnl_summary.pnl_percentage || 0}% return 🚀
@@ -180,10 +203,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
                 <p className="text-xs text-green-300 font-semibold">💰 Balance</p>
               </div>
               <p className="text-2xl font-bold gradient-text">
-                {formatCurrency(profile.balance.total_balance_usd || 0)}
+                {profile.balance.total_balance_formatted || '$0'}
               </p>
               <p className="text-sm text-green-200 mt-1">
-                {profile.balance.sol_balance || 0} SOL ⚡
+                {profile.balance.sol_balance_formatted || '0 SOL'} ⚡
               </p>
             </div>
           </div>
@@ -193,7 +216,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
             <div className="flex justify-between">
               <span className="text-gray-400">Win Rate</span>
               <span className="text-white font-semibold">
-                {profile.pnl_summary.win_rate || 0}%
+                {Math.round(profile.pnl_summary.win_rate || 0)}%
               </span>
             </div>
             <div className="flex justify-between">

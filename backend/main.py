@@ -63,6 +63,33 @@ def init_db():
 
 init_db()
 
+# Helper function to format numbers with k/M abbreviations
+def format_currency(amount):
+    """Format currency with k/M abbreviations"""
+    if amount is None:
+        return "$0"
+    
+    abs_amount = abs(amount)
+    sign = "-" if amount < 0 else ""
+    
+    if abs_amount >= 1_000_000:
+        # Format as millions
+        formatted = f"{abs_amount / 1_000_000:.1f}M"
+        # Remove .0 if it's a whole number
+        if formatted.endswith('.0M'):
+            formatted = formatted[:-3] + 'M'
+    elif abs_amount >= 1_000:
+        # Format as thousands
+        formatted = f"{abs_amount / 1_000:.1f}k"
+        # Remove .0 if it's a whole number
+        if formatted.endswith('.0k'):
+            formatted = formatted[:-3] + 'k'
+    else:
+        # Less than 1k, show as is
+        formatted = f"{abs_amount:.0f}"
+    
+    return f"{sign}${formatted}"
+
 # Demo trader bios mapping - REAL trader addresses with varied formatting
 DEMO_TRADER_BIOS = {
     "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
@@ -270,23 +297,28 @@ async def get_profiles(wallet_address: str):
     return {"profiles": profiles}
 
 def get_nansen_pnl(wallet_address: str):
-    """Fetch PnL summary from Nansen API"""
+    """Fetch PnL summary from Nansen API with 90D fallback to all-time"""
     if not nansen_api_key:
         print(f"⚠️ No Nansen API key - using mock data for {wallet_address[:8]}...")
         # Return mock data for demo
+        pnl = round(1000 + hash(wallet_address) % 50000, 2)
+        pnl_pct = round(10 + (hash(wallet_address) % 100), 1)
+        win_rate = round(50 + (hash(wallet_address) % 40))
         return {
-            "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
-            "pnl_percentage": round(10 + (hash(wallet_address) % 100), 2),
-            "win_rate": round(50 + (hash(wallet_address) % 40), 2),
-            "total_trades": 100 + (hash(wallet_address) % 500)
+            "total_pnl": pnl,
+            "total_pnl_formatted": format_currency(pnl),
+            "pnl_percentage": pnl_pct,
+            "win_rate": win_rate,
+            "total_trades": 100 + (hash(wallet_address) % 500),
+            "time_period": "90D"
         }
     
     try:
-        # Calculate 90 days ago
+        # Try 90 days first
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=90)
+        start_date_90d = end_date - timedelta(days=90)
         
-        print(f"📊 Fetching Nansen PnL for {wallet_address[:8]}...")
+        print(f"📊 Fetching Nansen 90D PnL for {wallet_address[:8]}...")
         
         response = requests.post(
             "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
@@ -295,44 +327,90 @@ def get_nansen_pnl(wallet_address: str):
                 "address": wallet_address,
                 "chain": "solana",
                 "date": {
-                    "from": start_date.strftime("%Y-%m-%dT00:00:00Z"),
+                    "from": start_date_90d.strftime("%Y-%m-%dT00:00:00Z"),
                     "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
                 }
             }),
             timeout=10
         )
         
-        print(f"📊 Nansen PnL Response: Status {response.status_code}")
+        print(f"📊 Nansen 90D PnL Response: Status {response.status_code}")
+        
+        time_period = "90D"
+        data = None
         
         if response.status_code == 200:
             data = response.json()
+            # Check if we have meaningful data (traded_times > 0)
+            if data.get("traded_times", 0) == 0:
+                print(f"⚠️ No 90D trades, trying all-time for {wallet_address[:8]}...")
+                # Try all-time (5 years)
+                start_date_alltime = end_date - timedelta(days=1825)
+                
+                response_alltime = requests.post(
+                    "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
+                    headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
+                    data=json.dumps({
+                        "address": wallet_address,
+                        "chain": "solana",
+                        "date": {
+                            "from": start_date_alltime.strftime("%Y-%m-%dT00:00:00Z"),
+                            "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
+                        }
+                    }),
+                    timeout=10
+                )
+                
+                if response_alltime.status_code == 200:
+                    data = response_alltime.json()
+                    time_period = "All Time"
+                    print(f"✅ Using all-time PnL for {wallet_address[:8]}")
+        
+        if data and data.get("traded_times", 0) > 0:
             print(f"✅ Nansen PnL Data: {data}")
+            
+            # Extract and format values
+            pnl = data.get("realized_pnl_usd", 0)
+            pnl_pct = round(data.get("realized_pnl_percent", 0) * 100, 1)  # Round to 0.1%
+            win_rate = round(data.get("win_rate", 0) * 100)  # Round to nearest %
             
             # Transform Nansen response to frontend-expected format
             return {
-                "total_pnl": data.get("realized_pnl_usd", 0),
-                "pnl_percentage": data.get("realized_pnl_percent", 0) * 100,  # Convert to percentage
-                "win_rate": data.get("win_rate", 0) * 100,  # Convert to percentage
+                "total_pnl": pnl,
+                "total_pnl_formatted": format_currency(pnl),
+                "pnl_percentage": pnl_pct,
+                "win_rate": win_rate,
                 "total_trades": data.get("traded_times", 0),
-                "traded_token_count": data.get("traded_token_count", 0)
+                "traded_token_count": data.get("traded_token_count", 0),
+                "time_period": time_period
             }
         else:
             print(f"❌ Nansen PnL Error: {response.status_code} - {response.text}")
             # Return mock data on error
+            pnl = round(1000 + hash(wallet_address) % 50000, 2)
+            pnl_pct = round(10 + (hash(wallet_address) % 100), 1)
+            win_rate = round(50 + (hash(wallet_address) % 40))
             return {
-                "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
-                "pnl_percentage": round(10 + (hash(wallet_address) % 100), 2),
-                "win_rate": round(50 + (hash(wallet_address) % 40), 2),
-                "total_trades": 100 + (hash(wallet_address) % 500)
+                "total_pnl": pnl,
+                "total_pnl_formatted": format_currency(pnl),
+                "pnl_percentage": pnl_pct,
+                "win_rate": win_rate,
+                "total_trades": 100 + (hash(wallet_address) % 500),
+                "time_period": "90D"
             }
     except Exception as e:
         print(f"❌ Exception fetching Nansen PnL: {str(e)}")
         # Return mock data on exception
+        pnl = round(1000 + hash(wallet_address) % 50000, 2)
+        pnl_pct = round(10 + (hash(wallet_address) % 100), 1)
+        win_rate = round(50 + (hash(wallet_address) % 40))
         return {
-            "total_pnl": round(1000 + hash(wallet_address) % 50000, 2),
-            "pnl_percentage": round(10 + (hash(wallet_address) % 100), 2),
-            "win_rate": round(50 + (hash(wallet_address) % 40), 2),
-            "total_trades": 100 + (hash(wallet_address) % 500)
+            "total_pnl": pnl,
+            "total_pnl_formatted": format_currency(pnl),
+            "pnl_percentage": pnl_pct,
+            "win_rate": win_rate,
+            "total_trades": 100 + (hash(wallet_address) % 500),
+            "time_period": "90D"
         }
 
 def get_nansen_balance(wallet_address: str):
@@ -340,9 +418,13 @@ def get_nansen_balance(wallet_address: str):
     if not nansen_api_key:
         print(f"⚠️ No Nansen API key - using mock balance for {wallet_address[:8]}...")
         # Return mock data for demo
+        balance = round(10000 + hash(wallet_address[:10]) % 100000, 2)
+        sol = round(50 + (hash(wallet_address[:8]) % 500), 2)
         return {
-            "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
-            "sol_balance": round(50 + (hash(wallet_address[:8]) % 500), 2),
+            "total_balance_usd": balance,
+            "total_balance_formatted": format_currency(balance),
+            "sol_balance": sol,
+            "sol_balance_formatted": f"{round(sol, 1)} SOL",
             "token_count": 5 + (hash(wallet_address[:6]) % 20)
         }
     
@@ -385,24 +467,34 @@ def get_nansen_balance(wallet_address: str):
             
             return {
                 "total_balance_usd": round(total_balance_usd, 2),
+                "total_balance_formatted": format_currency(total_balance_usd),
                 "sol_balance": round(sol_balance, 2),
+                "sol_balance_formatted": f"{round(sol_balance, 1)} SOL" if sol_balance < 1000 else f"{round(sol_balance / 1000, 1)}k SOL",
                 "token_count": len(tokens),
                 "tokens": tokens[:5]  # Include top 5 tokens for detail
             }
         else:
             print(f"❌ Nansen Balance Error: {response.status_code} - {response.text}")
             # Return mock data on error
+            balance = round(10000 + hash(wallet_address[:10]) % 100000, 2)
+            sol = round(50 + (hash(wallet_address[:8]) % 500), 2)
             return {
-                "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
-                "sol_balance": round(50 + (hash(wallet_address[:8]) % 500), 2),
+                "total_balance_usd": balance,
+                "total_balance_formatted": format_currency(balance),
+                "sol_balance": sol,
+                "sol_balance_formatted": f"{round(sol, 1)} SOL",
                 "token_count": 5 + (hash(wallet_address[:6]) % 20)
             }
     except Exception as e:
         print(f"❌ Exception fetching Nansen balance: {str(e)}")
         # Return mock data on exception
+        balance = round(10000 + hash(wallet_address[:10]) % 100000, 2)
+        sol = round(50 + (hash(wallet_address[:8]) % 500), 2)
         return {
-            "total_balance_usd": round(10000 + hash(wallet_address[:10]) % 100000, 2),
-            "sol_balance": round(50 + (hash(wallet_address[:8]) % 500), 2),
+            "total_balance_usd": balance,
+            "total_balance_formatted": format_currency(balance),
+            "sol_balance": sol,
+            "sol_balance_formatted": f"{round(sol, 1)} SOL",
             "token_count": 5 + (hash(wallet_address[:6]) % 20)
         }
 
