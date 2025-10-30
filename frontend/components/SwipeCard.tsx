@@ -9,12 +9,34 @@ interface Profile {
   wallet_address: string
   pnl_summary: any
   balance: any
-  bio?: string
+  trader_number: number | null
+  trader_number_formatted: string
+  bio: string | null
+  country: string | null
+  favourite_ct_account: string | null
+  worst_ct_account: string | null
+  favourite_trading_venue: string | null
+  asset_choice_6m: string | null
+  is_demo: boolean
 }
 
 interface SwipeCardProps {
   profile: Profile
   onSwipe: (direction: 'left' | 'right') => void
+}
+
+// Country code to flag emoji mapping
+const getCountryFlag = (countryCode: string | null) => {
+  if (!countryCode) return ''
+  const flags: Record<string, string> = {
+    US: '🇺🇸', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺', DE: '🇩🇪', FR: '🇫🇷',
+    ES: '🇪🇸', IT: '🇮🇹', JP: '🇯🇵', KR: '🇰🇷', CN: '🇨🇳', IN: '🇮🇳',
+    BR: '🇧🇷', MX: '🇲🇽', SG: '🇸🇬', NL: '🇳🇱', CH: '🇨🇭', SE: '🇸🇪',
+    NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', PL: '🇵🇱', TR: '🇹🇷', TH: '🇹🇭',
+    VN: '🇻🇳', PH: '🇵🇭', ID: '🇮🇩', MY: '🇲🇾', AE: '🇦🇪', SA: '🇸🇦',
+    ZA: '🇿🇦', AR: '🇦🇷', CL: '🇨🇱', CO: '🇨🇴', PT: '🇵🇹', OTHER: '🌍'
+  }
+  return flags[countryCode] || '🌍'
 }
 
 export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
@@ -23,6 +45,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0])
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showMore, setShowMore] = useState(false)
   const controls = useAnimation()
 
   const handleCopyAddress = async () => {

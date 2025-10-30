@@ -5,6 +5,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useEffect, useState } from 'react'
 import { SwipeCard } from '@/components/SwipeCard'
 import { Matches } from '@/components/Matches'
+import { ProfileCompleteModal } from '@/components/ProfileCompleteModal'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
@@ -15,7 +16,15 @@ interface Profile {
   wallet_address: string
   pnl_summary: any
   balance: any
-  bio?: string
+  trader_number: number | null
+  trader_number_formatted: string
+  bio: string | null
+  country: string | null
+  favourite_ct_account: string | null
+  worst_ct_account: string | null
+  favourite_trading_venue: string | null
+  asset_choice_6m: string | null
+  is_demo: boolean
 }
 
 export default function Home() {
@@ -26,46 +35,34 @@ export default function Home() {
   const [view, setView] = useState<'swipe' | 'matches'>('swipe')
   const [showSettings, setShowSettings] = useState(false)
   const [nansenApiKey, setNansenApiKey] = useState('')
-  const [showBioModal, setShowBioModal] = useState(false)
-  const [bio, setBio] = useState('')
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   useEffect(() => {
     if (connected && publicKey) {
-      createUserAccount()
+      checkUserProfile()
       loadProfiles()
     }
   }, [connected, publicKey])
 
-  const createUserAccount = async () => {
+  const checkUserProfile = async () => {
     if (!publicKey) return
     try {
       const response = await axios.post(`${API_BASE}/api/users`, {
         wallet_address: publicKey.toString()
       })
-      // If new user, show bio modal
-      if (!response.data.exists) {
-        setShowBioModal(true)
+      // If profile incomplete, show modal
+      if (!response.data.profile_complete) {
+        setShowProfileModal(true)
       }
     } catch (error) {
-      console.error('Error creating user account:', error)
+      console.error('Error checking user profile:', error)
     }
   }
 
-  const saveBio = async () => {
-    if (!publicKey || !bio.trim()) {
-      toast.error('Please enter a bio')
-      return
-    }
-    try {
-      await axios.put(`${API_BASE}/api/users/${publicKey.toString()}/bio`, {
-        bio: bio.trim()
-      })
-      toast.success('Bio saved!')
-      setShowBioModal(false)
-    } catch (error) {
-      toast.error('Failed to save bio')
-      console.error('Error saving bio:', error)
-    }
+  const handleProfileComplete = () => {
+    setShowProfileModal(false)
+    toast.success('Welcome to SizeMatters! 🎉')
+    loadProfiles()
   }
 
   const loadProfiles = async () => {
@@ -301,42 +298,12 @@ export default function Home() {
         )}
       </div>
 
-      {/* Bio Modal */}
-      {showBioModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 max-w-md w-full border border-gray-700">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent">
-              Welcome to SizeMatters! 🚀
-            </h2>
-            <p className="text-gray-300 mb-6">
-              Tell other traders about yourself
-            </p>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="I'm a DeFi degen who loves high-risk trades and memecoins..."
-              className="w-full bg-gray-800 text-white rounded-xl p-4 mb-4 border border-gray-600 focus:border-purple-500 focus:outline-none min-h-[120px] resize-none"
-              maxLength={200}
-            />
-            <div className="text-sm text-gray-400 mb-4">
-              {bio.length}/200 characters
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowBioModal(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition"
-              >
-                Skip
-              </button>
-              <button
-                onClick={saveBio}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-green-500 hover:opacity-90 text-white px-6 py-3 rounded-xl font-semibold transition"
-              >
-                Save Bio
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Profile Complete Modal */}
+      {showProfileModal && publicKey && (
+        <ProfileCompleteModal
+          walletAddress={publicKey.toString()}
+          onComplete={handleProfileComplete}
+        />
       )}
     </div>
   )
