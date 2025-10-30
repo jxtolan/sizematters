@@ -3,8 +3,23 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { FiArrowLeft, FiSend } from 'react-icons/fi'
+import toast from 'react-hot-toast'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+// Determine WebSocket URL based on API URL
+const getWebSocketUrl = () => {
+  if (typeof window === 'undefined') return 'ws://localhost:8000'
+  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  // Convert http/https to ws/wss
+  if (apiUrl.startsWith('https://')) {
+    return apiUrl.replace('https://', 'wss://')
+  } else if (apiUrl.startsWith('http://')) {
+    return apiUrl.replace('http://', 'ws://')
+  }
+  return 'ws://localhost:8000'
+}
 
 interface Message {
   sender_wallet: string
@@ -46,19 +61,28 @@ export const Chat: React.FC<ChatProps> = ({
   }, [messages])
 
   const connectWebSocket = () => {
-    const websocket = new WebSocket(`ws://localhost:8000/ws/chat/${chatRoomId}`)
+    const wsUrl = `${getWebSocketUrl()}/ws/chat/${chatRoomId}`
+    console.log('Connecting to WebSocket:', wsUrl)
+    
+    const websocket = new WebSocket(wsUrl)
     
     websocket.onopen = () => {
-      console.log('WebSocket connected')
+      console.log('✅ WebSocket connected')
     }
     
     websocket.onmessage = (event) => {
       const data = JSON.parse(event.data)
+      console.log('📩 Received message:', data)
       setMessages(prev => [...prev, data])
     }
     
     websocket.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      console.error('❌ WebSocket error:', error)
+      toast.error('Chat connection error')
+    }
+    
+    websocket.onclose = () => {
+      console.log('WebSocket closed')
     }
     
     setWs(websocket)
@@ -78,15 +102,21 @@ export const Chat: React.FC<ChatProps> = ({
   const sendMessage = async () => {
     if (!newMessage.trim()) return
 
+    const messageText = newMessage.trim()
+    setNewMessage('') // Clear immediately for better UX
+
     try {
+      console.log('Sending message:', messageText)
       await axios.post(`${API_BASE}/api/chat/message`, {
         chat_room_id: chatRoomId,
         sender_wallet: userWallet,
-        message: newMessage.trim()
+        message: messageText
       })
-      setNewMessage('')
+      console.log('✅ Message sent successfully')
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('❌ Error sending message:', error)
+      toast.error('Failed to send message')
+      setNewMessage(messageText) // Restore message on error
     }
   }
 
