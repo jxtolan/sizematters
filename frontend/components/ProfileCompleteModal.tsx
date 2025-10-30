@@ -80,7 +80,11 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
   const [venue, setVenue] = useState('')
   const [customVenue, setCustomVenue] = useState('')
   const [assetChoice, setAssetChoice] = useState('')
-  const [venues, setVenues] = useState<string[]>([])
+  const [venues, setVenues] = useState<string[]>([
+    'Pumpfun', 'GMGN', 'Photon', 'Jupiter', 'Drift', 
+    'Bloombot', 'NeoBullX', 'Trojan', 'Raydium', 
+    'Orca', 'Maestro', 'Other'
+  ]) // Fallback venues list
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
 
@@ -94,6 +98,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
       setVenues(response.data.venues)
     } catch (error) {
       console.error('Failed to fetch venues:', error)
+      // Keep fallback venues if fetch fails
     }
   }
 
