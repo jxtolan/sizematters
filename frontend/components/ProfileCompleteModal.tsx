@@ -76,6 +76,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
   const [country, setCountry] = useState('')
   const [favouriteCT, setFavouriteCT] = useState('')
   const [worstCT, setWorstCT] = useState('')
+  const [twitterAccount, setTwitterAccount] = useState('')
   const [venue, setVenue] = useState('')
   const [customVenue, setCustomVenue] = useState('')
   const [assetChoice, setAssetChoice] = useState('')
@@ -123,7 +124,8 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
         favourite_ct_account: favouriteCT.trim(),
         worst_ct_account: worstCT.trim() || null,  // Optional field
         favourite_trading_venue: finalVenue,
-        asset_choice_6m: assetChoice.trim()
+        asset_choice_6m: assetChoice.trim(),
+        twitter_account: twitterAccount.trim() || null  // Optional field
       })
       
       toast.success('Profile completed! 🎉')
@@ -255,6 +257,21 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
                 onChange={(e) => setWorstCT(e.target.value)}
                 placeholder="@username (optional)"
                 className="w-full p-4 bg-gray-800 border border-red-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                maxLength={50}
+              />
+            </div>
+
+            {/* Twitter Account */}
+            <div>
+              <label className="block text-sm font-semibold text-blue-300 mb-2">
+                Your Twitter (Optional) 🐦
+              </label>
+              <input
+                type="text"
+                value={twitterAccount}
+                onChange={(e) => setTwitterAccount(e.target.value)}
+                placeholder="@username (optional)"
+                className="w-full p-4 bg-gray-800 border border-blue-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 maxLength={50}
               />
             </div>

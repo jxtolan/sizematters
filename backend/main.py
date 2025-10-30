@@ -35,9 +35,10 @@ def init_db():
                   bio TEXT NOT NULL,
                   country TEXT NOT NULL,
                   favourite_ct_account TEXT NOT NULL,
-                  worst_ct_account TEXT NOT NULL,
+                  worst_ct_account TEXT,
                   favourite_trading_venue TEXT NOT NULL,
                   asset_choice_6m TEXT NOT NULL,
+                  twitter_account TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     # Swipes table
@@ -228,6 +229,7 @@ class ProfileComplete(BaseModel):
     worst_ct_account: Optional[str] = None  # Optional field
     favourite_trading_venue: str
     asset_choice_6m: str
+    twitter_account: Optional[str] = None  # Optional field
 
 # Demo trader addresses (backup if database is empty) - REAL trader addresses
 DEMO_TRADERS = [
@@ -302,13 +304,13 @@ async def check_user(user: UserCreate):
     
     # Check if user exists
     c.execute("""SELECT id, trader_number, bio, country, favourite_ct_account, 
-                 worst_ct_account, favourite_trading_venue, asset_choice_6m 
+                 worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
                  FROM users WHERE wallet_address = ?""", (user.wallet_address,))
     existing_user = c.fetchone()
     conn.close()
     
     if existing_user:
-        # User exists, check if profile is complete (worst_ct_account is optional)
+        # User exists, check if profile is complete (worst_ct_account and twitter_account are optional)
         profile_complete = all([
             existing_user[2],  # bio
             existing_user[3],  # country
@@ -316,6 +318,7 @@ async def check_user(user: UserCreate):
             # existing_user[5] is worst_ct_account - OPTIONAL
             existing_user[6],  # favourite_trading_venue
             existing_user[7]   # asset_choice_6m
+            # existing_user[8] is twitter_account - OPTIONAL
         ])
         
         return {
@@ -351,11 +354,11 @@ async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
             c.execute("""UPDATE users 
                         SET bio = ?, country = ?, favourite_ct_account = ?, 
                             worst_ct_account = ?, favourite_trading_venue = ?, 
-                            asset_choice_6m = ?
+                            asset_choice_6m = ?, twitter_account = ?
                         WHERE wallet_address = ?""",
                      (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
                       profile_data.worst_ct_account, profile_data.favourite_trading_venue,
-                      profile_data.asset_choice_6m, wallet_address))
+                      profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
             user_id = existing_user[0]
             trader_number = existing_user[1]
         else:
@@ -365,12 +368,12 @@ async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
             
             c.execute("""INSERT INTO users 
                         (id, wallet_address, trader_number, bio, country, favourite_ct_account,
-                         worst_ct_account, favourite_trading_venue, asset_choice_6m)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                         worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                      (user_id, wallet_address, trader_number, profile_data.bio, 
                       profile_data.country, profile_data.favourite_ct_account,
                       profile_data.worst_ct_account, profile_data.favourite_trading_venue,
-                      profile_data.asset_choice_6m))
+                      profile_data.asset_choice_6m, profile_data.twitter_account))
         
         conn.commit()
         conn.close()
@@ -385,6 +388,63 @@ async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to complete profile: {str(e)}")
+
+@app.get("/api/users/{wallet_address}/profile")
+async def get_my_profile(wallet_address: str):
+    """Get user's own complete profile for editing"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    
+    c.execute("""SELECT trader_number, bio, country, favourite_ct_account, 
+                 worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
+                 FROM users WHERE wallet_address = ?""", (wallet_address,))
+    user = c.fetchone()
+    conn.close()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    return {
+        "wallet_address": wallet_address,
+        "trader_number": user[0],
+        "trader_number_formatted": format_trader_number(user[0]) if user[0] else None,
+        "bio": user[1],
+        "country": user[2],
+        "favourite_ct_account": user[3],
+        "worst_ct_account": user[4],
+        "favourite_trading_venue": user[5],
+        "asset_choice_6m": user[6],
+        "twitter_account": user[7]
+    }
+
+@app.put("/api/users/{wallet_address}/profile")
+async def update_my_profile(wallet_address: str, profile_data: ProfileComplete):
+    """Update user's own profile"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    
+    try:
+        # Update user profile
+        c.execute("""UPDATE users 
+                    SET bio = ?, country = ?, favourite_ct_account = ?, 
+                        worst_ct_account = ?, favourite_trading_venue = ?, 
+                        asset_choice_6m = ?, twitter_account = ?
+                    WHERE wallet_address = ?""",
+                 (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
+                  profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                  profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
+        
+        if c.rowcount == 0:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        conn.commit()
+        conn.close()
+        
+        return {"status": "success", "message": "Profile updated successfully"}
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
 @app.get("/api/profiles/{wallet_address}")
 async def get_profiles(wallet_address: str):
@@ -439,7 +499,7 @@ async def get_profiles(wallet_address: str):
         conn = sqlite3.connect('smartmoney.db')
         c = conn.cursor()
         c.execute("""SELECT trader_number, bio, country, favourite_ct_account, 
-                     worst_ct_account, favourite_trading_venue, asset_choice_6m 
+                     worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
                      FROM users WHERE wallet_address = ?""", (wallet,))
         profile_result = c.fetchone()
         conn.close()
@@ -455,7 +515,8 @@ async def get_profiles(wallet_address: str):
                 "favourite_ct_account": profile_result[3],
                 "worst_ct_account": profile_result[4],
                 "favourite_trading_venue": profile_result[5],
-                "asset_choice_6m": profile_result[6]
+                "asset_choice_6m": profile_result[6],
+                "twitter_account": profile_result[7]
             }
         else:
             # Demo profile
@@ -467,7 +528,8 @@ async def get_profiles(wallet_address: str):
                 "favourite_ct_account": None,
                 "worst_ct_account": None,
                 "favourite_trading_venue": None,
-                "asset_choice_6m": None
+                "asset_choice_6m": None,
+                "twitter_account": None
             }
         
         profiles.append({

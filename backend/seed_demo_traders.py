@@ -16,7 +16,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@cobie",
         "worst_ct_account": "@bitboy",
         "favourite_trading_venue": "Pumpfun",
-        "asset_choice_6m": "BONK & memecoins"
+        "asset_choice_6m": "BONK & memecoins",
+        "twitter_account": "@whale_hunter_23"
     },
     {
         "address": "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
@@ -25,7 +26,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@0xfoobar",
         "worst_ct_account": "@elonmusk",
         "favourite_trading_venue": "Jupiter",
-        "asset_choice_6m": "SOL derivatives"
+        "asset_choice_6m": "SOL derivatives",
+        "twitter_account": "@quant_degen_88"
     },
     {
         "address": "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
@@ -34,7 +36,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@derekmajor",
         "worst_ct_account": "@justinsuntron",
         "favourite_trading_venue": "Raydium",
-        "asset_choice_6m": "Blue chips only"
+        "asset_choice_6m": "Blue chips only",
+        "twitter_account": "@diamond_dave_sol"
     },
     {
         "address": "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
@@ -43,7 +46,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@milkybullz",
         "worst_ct_account": "@benlilly",
         "favourite_trading_venue": "GMGN",
-        "asset_choice_6m": "Shit coins to 100x"
+        "asset_choice_6m": "Shit coins to 100x",
+        "twitter_account": "@100x_or_bust"
     },
     {
         "address": "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
@@ -52,7 +56,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@hsakatrades",
         "worst_ct_account": "@cryptokong",
         "favourite_trading_venue": "Drift",
-        "asset_choice_6m": "Perps & leverage"
+        "asset_choice_6m": "Perps & leverage",
+        "twitter_account": "@orderbook_wizard"
     },
     {
         "address": "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
@@ -61,7 +66,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@inversebrah",
         "worst_ct_account": "@cryptocobain",
         "favourite_trading_venue": "Photon",
-        "asset_choice_6m": "MEV opportunities"
+        "asset_choice_6m": "MEV opportunities",
+        "twitter_account": "@mev_bot_whisperer"
     },
     {
         "address": "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
@@ -70,7 +76,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@byzantinegeneral",
         "worst_ct_account": "@davidgokhshtein",
         "favourite_trading_venue": "Maestro",
-        "asset_choice_6m": "Fast flips"
+        "asset_choice_6m": "Fast flips",
+        "twitter_account": "@speedrun_sol"
     },
     {
         "address": "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
@@ -79,7 +86,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@gainzy",
         "worst_ct_account": "@pauly0x",
         "favourite_trading_venue": "NeoBullX",
-        "asset_choice_6m": "Whatever pumps"
+        "asset_choice_6m": "Whatever pumps",
+        "twitter_account": "@lucky_gambler_sol"
     },
     {
         "address": "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn",
@@ -88,7 +96,8 @@ DEMO_TRADERS = [
         "favourite_ct_account": "@0xngmi",
         "worst_ct_account": "@altsseason",
         "favourite_trading_venue": "Trojan",
-        "asset_choice_6m": "Anime coins"
+        "asset_choice_6m": "Anime coins",
+        "twitter_account": "@3am_trading_god"
     }
 ]
 
@@ -113,11 +122,11 @@ def seed_database():
                 c.execute("""UPDATE users 
                             SET bio = ?, country = ?, favourite_ct_account = ?,
                                 worst_ct_account = ?, favourite_trading_venue = ?,
-                                asset_choice_6m = ?
+                                asset_choice_6m = ?, twitter_account = ?
                             WHERE wallet_address = ?""",
                          (trader["bio"], trader["country"], trader["favourite_ct_account"],
                           trader["worst_ct_account"], trader["favourite_trading_venue"],
-                          trader["asset_choice_6m"], trader["address"]))
+                          trader["asset_choice_6m"], trader.get("twitter_account"), trader["address"]))
                 print(f"✏️  Updated: {trader['address'][:8]}... - {trader['country']} - {trader['favourite_trading_venue']}")
                 skipped += 1
             else:
@@ -125,12 +134,12 @@ def seed_database():
                 user_id = str(uuid.uuid4())
                 c.execute("""INSERT INTO users 
                             (id, wallet_address, trader_number, bio, country, favourite_ct_account,
-                             worst_ct_account, favourite_trading_venue, asset_choice_6m, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                             worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                          (user_id, trader["address"], idx, trader["bio"], trader["country"],
                           trader["favourite_ct_account"], trader["worst_ct_account"],
                           trader["favourite_trading_venue"], trader["asset_choice_6m"],
-                          datetime.now().isoformat()))
+                          trader.get("twitter_account"), datetime.now().isoformat()))
                 print(f"✅ Added #{idx:03d}: {trader['address'][:8]}... - {trader['country']} {trader['favourite_trading_venue']}")
                 added += 1
             

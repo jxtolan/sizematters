@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { SwipeCard } from '@/components/SwipeCard'
 import { Matches } from '@/components/Matches'
 import { ProfileCompleteModal } from '@/components/ProfileCompleteModal'
+import { MyProfile } from '@/components/MyProfile'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
@@ -34,6 +35,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'swipe' | 'matches'>('swipe')
   const [showSettings, setShowSettings] = useState(false)
+  const [showMyProfile, setShowMyProfile] = useState(false)
   const [nansenApiKey, setNansenApiKey] = useState('')
   const [showProfileModal, setShowProfileModal] = useState(false)
 
@@ -186,6 +188,12 @@ export default function Home() {
           
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setShowMyProfile(true)}
+              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 text-purple-200 rounded-lg transition font-semibold"
+            >
+              👤 My Profile
+            </button>
+            <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-gray-800 rounded-lg transition"
             >
@@ -303,6 +311,14 @@ export default function Home() {
         <ProfileCompleteModal
           walletAddress={publicKey.toString()}
           onComplete={handleProfileComplete}
+        />
+      )}
+
+      {/* My Profile Modal */}
+      {showMyProfile && publicKey && (
+        <MyProfile
+          walletAddress={publicKey.toString()}
+          onClose={() => setShowMyProfile(false)}
         />
       )}
     </div>

@@ -17,6 +17,7 @@ interface Profile {
   worst_ct_account: string | null
   favourite_trading_venue: string | null
   asset_choice_6m: string | null
+  twitter_account: string | null
   is_demo: boolean
 }
 
@@ -338,6 +339,14 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
                   <span className="text-gray-400">🎯 Asset Choice</span>
                   <span className="text-white font-semibold truncate max-w-[150px]">
                     {profile.asset_choice_6m}
+                  </span>
+                </div>
+              )}
+              {profile.twitter_account && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">🐦 Twitter</span>
+                  <span className="text-white font-semibold truncate max-w-[150px]">
+                    {profile.twitter_account}
                   </span>
                 </div>
               )}
