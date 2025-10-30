@@ -307,7 +307,15 @@ def get_nansen_pnl(wallet_address: str):
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Nansen PnL Data: {data}")
-            return data
+            
+            # Transform Nansen response to frontend-expected format
+            return {
+                "total_pnl": data.get("realized_pnl_usd", 0),
+                "pnl_percentage": data.get("realized_pnl_percent", 0) * 100,  # Convert to percentage
+                "win_rate": data.get("win_rate", 0) * 100,  # Convert to percentage
+                "total_trades": data.get("traded_times", 0),
+                "traded_token_count": data.get("traded_token_count", 0)
+            }
         else:
             print(f"❌ Nansen PnL Error: {response.status_code} - {response.text}")
             # Return mock data on error
@@ -361,7 +369,26 @@ def get_nansen_balance(wallet_address: str):
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Nansen Balance Data: {data}")
-            return data
+            
+            # Transform Nansen response to frontend-expected format
+            tokens = data.get("data", [])
+            
+            # Calculate total balance
+            total_balance_usd = sum(token.get("value_usd", 0) for token in tokens)
+            
+            # Find SOL balance
+            sol_balance = 0
+            for token in tokens:
+                if token.get("token_symbol") == "SOL":
+                    sol_balance = token.get("token_amount", 0)
+                    break
+            
+            return {
+                "total_balance_usd": round(total_balance_usd, 2),
+                "sol_balance": round(sol_balance, 2),
+                "token_count": len(tokens),
+                "tokens": tokens[:5]  # Include top 5 tokens for detail
+            }
         else:
             print(f"❌ Nansen Balance Error: {response.status_code} - {response.text}")
             # Return mock data on error
