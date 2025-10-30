@@ -25,18 +25,41 @@ interface SwipeCardProps {
   onSwipe: (direction: 'left' | 'right') => void
 }
 
-// Country code to flag emoji mapping
+// Country code to flag emoji mapping (expanded)
 const getCountryFlag = (countryCode: string | null) => {
   if (!countryCode) return ''
   const flags: Record<string, string> = {
     US: '🇺🇸', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺', DE: '🇩🇪', FR: '🇫🇷',
-    ES: '🇪🇸', IT: '🇮🇹', JP: '🇯🇵', KR: '🇰🇷', CN: '🇨🇳', IN: '🇮🇳',
-    BR: '🇧🇷', MX: '🇲🇽', SG: '🇸🇬', NL: '🇳🇱', CH: '🇨🇭', SE: '🇸🇪',
-    NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', PL: '🇵🇱', TR: '🇹🇷', TH: '🇹🇭',
-    VN: '🇻🇳', PH: '🇵🇭', ID: '🇮🇩', MY: '🇲🇾', AE: '🇦🇪', SA: '🇸🇦',
-    ZA: '🇿🇦', AR: '🇦🇷', CL: '🇨🇱', CO: '🇨🇴', PT: '🇵🇹', OTHER: '🌍'
+    ES: '🇪🇸', IT: '🇮🇹', IE: '🇮🇪', NL: '🇳🇱', BE: '🇧🇪', CH: '🇨🇭',
+    AT: '🇦🇹', SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', IS: '🇮🇸',
+    PL: '🇵🇱', CZ: '🇨🇿', GR: '🇬🇷', PT: '🇵🇹', RO: '🇷🇴', HU: '🇭🇺',
+    TR: '🇹🇷', RU: '🇷🇺', UA: '🇺🇦', SG: '🇸🇬', HK: '🇭🇰', JP: '🇯🇵',
+    KR: '🇰🇷', CN: '🇨🇳', TW: '🇹🇼', IN: '🇮🇳', TH: '🇹🇭', VN: '🇻🇳',
+    PH: '🇵🇭', ID: '🇮🇩', MY: '🇲🇾', NZ: '🇳🇿', AE: '🇦🇪', SA: '🇸🇦',
+    IL: '🇮🇱', ZA: '🇿🇦', NG: '🇳🇬', EG: '🇪🇬', BR: '🇧🇷', MX: '🇲🇽',
+    AR: '🇦🇷', CL: '🇨🇱', CO: '🇨🇴', PE: '🇵🇪', VE: '🇻🇪', OTHER: '🌍'
   }
   return flags[countryCode] || '🌍'
+}
+
+// Country code to full name mapping
+const getCountryName = (countryCode: string | null) => {
+  if (!countryCode) return 'Unknown'
+  const names: Record<string, string> = {
+    US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+    DE: 'Germany', FR: 'France', ES: 'Spain', IT: 'Italy', IE: 'Ireland',
+    NL: 'Netherlands', BE: 'Belgium', CH: 'Switzerland', AT: 'Austria',
+    SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', IS: 'Iceland',
+    PL: 'Poland', CZ: 'Czech Republic', GR: 'Greece', PT: 'Portugal',
+    RO: 'Romania', HU: 'Hungary', TR: 'Turkey', RU: 'Russia', UA: 'Ukraine',
+    SG: 'Singapore', HK: 'Hong Kong', JP: 'Japan', KR: 'South Korea',
+    CN: 'China', TW: 'Taiwan', IN: 'India', TH: 'Thailand', VN: 'Vietnam',
+    PH: 'Philippines', ID: 'Indonesia', MY: 'Malaysia', NZ: 'New Zealand',
+    AE: 'UAE', SA: 'Saudi Arabia', IL: 'Israel', ZA: 'South Africa',
+    NG: 'Nigeria', EG: 'Egypt', BR: 'Brazil', MX: 'Mexico', AR: 'Argentina',
+    CL: 'Chile', CO: 'Colombia', PE: 'Peru', VE: 'Venezuela', OTHER: 'Other'
+  }
+  return names[countryCode] || 'Unknown'
 }
 
 export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
@@ -176,11 +199,16 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
 
         {/* Profile Content */}
         <div className="p-8">
-          {/* Wallet Address */}
+          {/* Header - Trader Number + Country */}
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-white mb-2">
-              Trader {profile.wallet_address.slice(0, 4)}...{profile.wallet_address.slice(-4)}
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-3xl font-bold text-white">
+                Trader {profile.trader_number_formatted || '#000'}
+              </h2>
+              {profile.country && (
+                <span className="text-4xl">{getCountryFlag(profile.country)}</span>
+              )}
+            </div>
             <button
               onClick={handleCopyAddress}
               className="flex items-center gap-2 text-sm text-gray-400 font-mono hover:text-purple-400 transition group"
@@ -234,27 +262,87 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
             </div>
           </div>
 
-          {/* Additional Stats */}
-          <div className="bg-gray-800 bg-opacity-50 p-5 rounded-2xl space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Win Rate</span>
-              <span className="text-white font-semibold">
-                {Math.round(profile.pnl_summary.win_rate || 0)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Total Trades</span>
-              <span className="text-white font-semibold">
-                {profile.pnl_summary.total_trades || 0}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Token Holdings</span>
-              <span className="text-white font-semibold">
-                {profile.balance.token_count || 0} tokens
-              </span>
-            </div>
+          {/* Quick Info - Venue + CT */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {profile.favourite_trading_venue && (
+              <div className="glass p-4 rounded-xl border border-cyan-500/30">
+                <p className="text-xs text-cyan-300 mb-1">⚡ Venue</p>
+                <p className="text-sm text-white font-semibold truncate">
+                  {profile.favourite_trading_venue}
+                </p>
+              </div>
+            )}
+            {profile.favourite_ct_account && (
+              <div className="glass p-4 rounded-xl border border-green-500/30">
+                <p className="text-xs text-green-300 mb-1">💚 Fav CT</p>
+                <p className="text-sm text-white font-semibold truncate">
+                  {profile.favourite_ct_account}
+                </p>
+              </div>
+            )}
           </div>
+
+          {/* View More Toggle */}
+          <button
+            onClick={() => setShowMore(!showMore)}
+            className="w-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 text-purple-200 font-semibold py-3 rounded-xl transition mb-4"
+          >
+            {showMore ? '▲ View Less' : '▼ View More'}
+          </button>
+
+          {/* Expandable Details */}
+          {showMore && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-gray-800 bg-opacity-50 p-5 rounded-2xl space-y-3 mb-4"
+            >
+              <div className="flex justify-between">
+                <span className="text-gray-400">Win Rate</span>
+                <span className="text-white font-semibold">
+                  {Math.round(profile.pnl_summary.win_rate || 0)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Total Trades</span>
+                <span className="text-white font-semibold">
+                  {profile.pnl_summary.total_trades || 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Token Holdings</span>
+                <span className="text-white font-semibold">
+                  {profile.balance.token_count || 0} tokens
+                </span>
+              </div>
+              {profile.country && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Country</span>
+                  <span className="text-white font-semibold">
+                    {getCountryFlag(profile.country)} {getCountryName(profile.country)}
+                  </span>
+                </div>
+              )}
+              {profile.worst_ct_account && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">💔 Worst CT</span>
+                  <span className="text-white font-semibold truncate max-w-[150px]">
+                    {profile.worst_ct_account}
+                  </span>
+                </div>
+              )}
+              {profile.asset_choice_6m && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">🎯 Asset Choice</span>
+                  <span className="text-white font-semibold truncate max-w-[150px]">
+                    {profile.asset_choice_6m}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Trading Style Badge */}
           <div className="mt-6 flex flex-wrap gap-2">

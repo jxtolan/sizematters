@@ -13,7 +13,7 @@ interface ProfileCompleteModalProps {
   onComplete: () => void
 }
 
-// Country list with emoji flags
+// Country list with emoji flags (expanded)
 const COUNTRIES = [
   { code: 'US', name: 'United States', flag: '🇺🇸' },
   { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
@@ -23,33 +23,51 @@ const COUNTRIES = [
   { code: 'FR', name: 'France', flag: '🇫🇷' },
   { code: 'ES', name: 'Spain', flag: '🇪🇸' },
   { code: 'IT', name: 'Italy', flag: '🇮🇹' },
-  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-  { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
-  { code: 'CN', name: 'China', flag: '🇨🇳' },
-  { code: 'IN', name: 'India', flag: '🇮🇳' },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
-  { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
-  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'IE', name: 'Ireland', flag: '🇮🇪' },
   { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'BE', name: 'Belgium', flag: '🇧🇪' },
   { code: 'CH', name: 'Switzerland', flag: '🇨🇭' },
+  { code: 'AT', name: 'Austria', flag: '🇦🇹' },
   { code: 'SE', name: 'Sweden', flag: '🇸🇪' },
   { code: 'NO', name: 'Norway', flag: '🇳🇴' },
   { code: 'DK', name: 'Denmark', flag: '🇩🇰' },
   { code: 'FI', name: 'Finland', flag: '🇫🇮' },
+  { code: 'IS', name: 'Iceland', flag: '🇮🇸' },
   { code: 'PL', name: 'Poland', flag: '🇵🇱' },
+  { code: 'CZ', name: 'Czech Republic', flag: '🇨🇿' },
+  { code: 'GR', name: 'Greece', flag: '🇬🇷' },
+  { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
+  { code: 'RO', name: 'Romania', flag: '🇷🇴' },
+  { code: 'HU', name: 'Hungary', flag: '🇭🇺' },
   { code: 'TR', name: 'Turkey', flag: '🇹🇷' },
+  { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+  { code: 'UA', name: 'Ukraine', flag: '🇺🇦' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+  { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' },
+  { code: 'TW', name: 'Taiwan', flag: '🇹🇼' },
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
   { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
   { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
   { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
   { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
   { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' },
   { code: 'AE', name: 'UAE', flag: '🇦🇪' },
   { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: 'IL', name: 'Israel', flag: '🇮🇱' },
   { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
   { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
   { code: 'CL', name: 'Chile', flag: '🇨🇱' },
   { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-  { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
+  { code: 'PE', name: 'Peru', flag: '🇵🇪' },
+  { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
   { code: 'OTHER', name: 'Other', flag: '🌍' }
 ]
 
@@ -82,7 +100,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
     if (!bio.trim()) return 'Bio is required'
     if (!country) return 'Country is required'
     if (!favouriteCT.trim()) return 'Favourite CT account is required'
-    if (!worstCT.trim()) return 'Worst CT account is required'
+    // worstCT is now optional
     if (!venue) return 'Favourite trading venue is required'
     if (venue === 'Other' && !customVenue.trim()) return 'Please specify your trading venue'
     if (!assetChoice.trim()) return 'Asset choice is required'
@@ -103,7 +121,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
         bio: bio.trim(),
         country: country,
         favourite_ct_account: favouriteCT.trim(),
-        worst_ct_account: worstCT.trim(),
+        worst_ct_account: worstCT.trim() || null,  // Optional field
         favourite_trading_venue: finalVenue,
         asset_choice_6m: assetChoice.trim()
       })
@@ -136,7 +154,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
             Complete Your Profile ✨
           </h2>
           <p className="text-gray-400">
-            Let other traders know about you! All fields are required.
+            Let other traders know about you! Fields marked with * are required.
           </p>
           <div className="mt-4 flex gap-2">
             {[1, 2].map(s => (
@@ -229,13 +247,13 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
             {/* Worst CT Account */}
             <div>
               <label className="block text-sm font-semibold text-red-300 mb-2">
-                Worst CT Account * 💔
+                Worst CT Account (Optional) 💔
               </label>
               <input
                 type="text"
                 value={worstCT}
                 onChange={(e) => setWorstCT(e.target.value)}
-                placeholder="@username"
+                placeholder="@username (optional)"
                 className="w-full p-4 bg-gray-800 border border-red-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
                 maxLength={50}
               />

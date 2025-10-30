@@ -225,7 +225,7 @@ class ProfileComplete(BaseModel):
     bio: str
     country: str
     favourite_ct_account: str
-    worst_ct_account: str
+    worst_ct_account: Optional[str] = None  # Optional field
     favourite_trading_venue: str
     asset_choice_6m: str
 
@@ -308,12 +308,12 @@ async def check_user(user: UserCreate):
     conn.close()
     
     if existing_user:
-        # User exists, check if profile is complete
+        # User exists, check if profile is complete (worst_ct_account is optional)
         profile_complete = all([
             existing_user[2],  # bio
             existing_user[3],  # country
             existing_user[4],  # favourite_ct_account
-            existing_user[5],  # worst_ct_account
+            # existing_user[5] is worst_ct_account - OPTIONAL
             existing_user[6],  # favourite_trading_venue
             existing_user[7]   # asset_choice_6m
         ])
