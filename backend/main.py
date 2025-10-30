@@ -154,6 +154,31 @@ DEMO_TRADER_BIOS = {
 }
 
 # Auto-seed demo traders on startup if database is empty
+def run_migrations():
+    """Run database migrations automatically on startup"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    
+    try:
+        print("🔄 Checking database migrations...")
+        
+        # Check if twitter_account column exists
+        c.execute("PRAGMA table_info(users)")
+        columns = [row[1] for row in c.fetchall()]
+        
+        if 'twitter_account' not in columns:
+            print("   📝 Adding twitter_account column...")
+            c.execute("ALTER TABLE users ADD COLUMN twitter_account TEXT")
+            conn.commit()
+            print("   ✅ twitter_account column added!")
+        else:
+            print("   ✅ All migrations up to date")
+        
+        conn.close()
+    except Exception as e:
+        print(f"   ⚠️  Migration error: {e}")
+        conn.close()
+
 def auto_seed_demo_traders():
     """Automatically seed demo traders on startup if database has no users"""
     conn = sqlite3.connect('smartmoney.db')
@@ -181,7 +206,8 @@ def auto_seed_demo_traders():
     
     conn.close()
 
-# Run auto-seed on startup
+# Run migrations and auto-seed on startup
+run_migrations()
 auto_seed_demo_traders()
 
 # WebSocket connection manager
