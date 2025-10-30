@@ -272,22 +272,27 @@ DEMO_TRADERS = [
 
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
-    """Get all trader wallet addresses from the database (REAL USERS FIRST, then demos)"""
+    """Get all trader wallet addresses from the database (REAL USERS FIRST, then demos if DB is empty)"""
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     c.execute("SELECT wallet_address FROM users ORDER BY created_at DESC")
-    real_wallets = [row[0] for row in c.fetchall()]
+    all_wallets = [row[0] for row in c.fetchall()]
     conn.close()
     
-    # Remove demo traders from real_wallets (in case they were manually added)
-    real_users_only = [w for w in real_wallets if w not in DEMO_TRADERS]
+    # If database is empty or has only 1 user, add demo traders as fallback
+    if len(all_wallets) <= 1:
+        print(f"⚠️ Only {len(all_wallets)} user(s) in database. Adding demo traders as fallback.")
+        # Separate real users from demo traders
+        real_users_only = [w for w in all_wallets if w not in DEMO_TRADERS]
+        return real_users_only + DEMO_TRADERS
     
-    # ALWAYS show real users first, then demo traders as filler
-    all_wallets = real_users_only + DEMO_TRADERS
+    # Otherwise, return all users from database (including seeded demo traders)
+    real_users = [w for w in all_wallets if w not in DEMO_TRADERS]
+    demo_users = [w for w in all_wallets if w in DEMO_TRADERS]
+    print(f"👥 Total profiles: {len(real_users)} real users + {len(demo_users)} demo traders in DB")
     
-    print(f"👥 Total profiles: {len(real_users_only)} real users + {len(DEMO_TRADERS)} demos")
-    
-    return all_wallets
+    # Real users first, then demo traders
+    return real_users + demo_users
 
 # Helper function to get next trader number
 def get_next_trader_number():
