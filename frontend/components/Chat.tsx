@@ -137,10 +137,12 @@ export const Chat: React.FC<ChatProps> = ({
     })
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      if (newMessage.trim()) {
+        sendMessage()
+      }
     }
   }
 
@@ -208,14 +210,18 @@ export const Chat: React.FC<ChatProps> = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             className="flex-1 bg-gray-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           <button
-            onClick={sendMessage}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              sendMessage()
+            }}
             disabled={!newMessage.trim()}
-            className="bg-gradient-to-r from-purple-500 to-green-500 px-6 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-purple-500 to-green-500 px-6 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <FiSend className="text-xl" />
           </button>

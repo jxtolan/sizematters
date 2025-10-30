@@ -88,16 +88,16 @@ export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
               <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0 glow-purple pulse-glow">
                 <span className="text-3xl">🔥</span>
               </div>
-              <div className="flex-1 text-left">
+              <div className="flex-1 text-left min-w-0">
                 <p className="text-white font-bold text-lg mb-1 flex items-center gap-2">
                   <span>💎</span>
                   Trader {formatWallet(match.wallet_address)}
                 </p>
-                <p className="text-sm text-gray-400 font-mono">
+                <p className="text-sm text-gray-400 font-mono truncate">
                   {match.wallet_address}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <p className="text-xs text-cyan-400 mb-2 font-semibold">
                   {formatDate(match.created_at)}
                 </p>
