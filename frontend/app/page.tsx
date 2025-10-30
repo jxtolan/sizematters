@@ -25,6 +25,7 @@ interface Profile {
   worst_ct_account: string | null
   favourite_trading_venue: string | null
   asset_choice_6m: string | null
+  twitter_account: string | null
   is_demo: boolean
 }
 
