@@ -9,6 +9,7 @@ import sqlite3
 import uuid
 from collections import defaultdict
 import os
+import time
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -62,6 +63,48 @@ def init_db():
     conn.close()
 
 init_db()
+
+# In-memory cache for Nansen API responses
+# Structure: { wallet_address: { 'pnl': {...}, 'balance': {...}, 'timestamp': 123456 } }
+nansen_cache = {}
+CACHE_TTL_SECONDS = 300  # 5 minutes
+
+def get_cached_data(wallet_address: str, data_type: str):
+    """Get cached Nansen data if not expired"""
+    if wallet_address not in nansen_cache:
+        return None
+    
+    cache_entry = nansen_cache[wallet_address]
+    
+    # Check if cache expired
+    if time.time() - cache_entry.get('timestamp', 0) > CACHE_TTL_SECONDS:
+        # Cache expired, remove it
+        del nansen_cache[wallet_address]
+        return None
+    
+    return cache_entry.get(data_type)
+
+def set_cached_data(wallet_address: str, data_type: str, data: dict):
+    """Cache Nansen API response"""
+    if wallet_address not in nansen_cache:
+        nansen_cache[wallet_address] = {'timestamp': time.time()}
+    else:
+        nansen_cache[wallet_address]['timestamp'] = time.time()
+    
+    nansen_cache[wallet_address][data_type] = data
+
+def clear_expired_cache():
+    """Periodic cleanup of expired cache entries"""
+    current_time = time.time()
+    expired_wallets = [
+        wallet for wallet, data in nansen_cache.items()
+        if current_time - data.get('timestamp', 0) > CACHE_TTL_SECONDS
+    ]
+    for wallet in expired_wallets:
+        del nansen_cache[wallet]
+    
+    if expired_wallets:
+        print(f"🧹 Cleared {len(expired_wallets)} expired cache entries")
 
 # Helper function to format numbers with k/M abbreviations
 def format_currency(amount):
@@ -256,6 +299,9 @@ async def update_user_bio(wallet_address: str, bio_data: BioUpdate):
 @app.get("/api/profiles/{wallet_address}")
 async def get_profiles(wallet_address: str):
     """Get profiles to swipe through (excluding already swiped wallets)"""
+    # Cleanup expired cache entries periodically
+    clear_expired_cache()
+    
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     
@@ -272,6 +318,8 @@ async def get_profiles(wallet_address: str):
     # Filter out current user and already swiped wallets
     available_wallets = [w for w in all_wallets 
                          if w != wallet_address and w not in swiped_wallets]
+    
+    print(f"📊 Cache status: {len(nansen_cache)} wallets cached")
     
     profiles = []
     for wallet in available_wallets[:10]:  # Return up to 10 profiles
@@ -297,14 +345,22 @@ async def get_profiles(wallet_address: str):
     return {"profiles": profiles}
 
 def get_nansen_pnl(wallet_address: str):
-    """Fetch PnL summary from Nansen API with 90D fallback to all-time"""
+    """Fetch PnL summary from Nansen API with 90D fallback to all-time (CACHED)"""
+    # Check cache first
+    cached_pnl = get_cached_data(wallet_address, 'pnl')
+    if cached_pnl:
+        print(f"⚡ Cache HIT for PnL: {wallet_address[:8]}...")
+        return cached_pnl
+    
+    print(f"💾 Cache MISS for PnL: {wallet_address[:8]}... fetching from API")
+    
     if not nansen_api_key:
         print(f"⚠️ No Nansen API key - using mock data for {wallet_address[:8]}...")
         # Return mock data for demo
         pnl = round(1000 + hash(wallet_address) % 50000, 2)
         pnl_pct = round(10 + (hash(wallet_address) % 100), 1)
         win_rate = round(50 + (hash(wallet_address) % 40))
-        return {
+        mock_data = {
             "total_pnl": pnl,
             "total_pnl_formatted": format_currency(pnl),
             "pnl_percentage": pnl_pct,
@@ -312,6 +368,8 @@ def get_nansen_pnl(wallet_address: str):
             "total_trades": 100 + (hash(wallet_address) % 500),
             "time_period": "90D"
         }
+        set_cached_data(wallet_address, 'pnl', mock_data)
+        return mock_data
     
     try:
         # Try 90 days first
@@ -375,7 +433,7 @@ def get_nansen_pnl(wallet_address: str):
             win_rate = round(data.get("win_rate", 0) * 100)  # Round to nearest %
             
             # Transform Nansen response to frontend-expected format
-            return {
+            result = {
                 "total_pnl": pnl,
                 "total_pnl_formatted": format_currency(pnl),
                 "pnl_percentage": pnl_pct,
@@ -384,6 +442,10 @@ def get_nansen_pnl(wallet_address: str):
                 "traded_token_count": data.get("traded_token_count", 0),
                 "time_period": time_period
             }
+            
+            # Cache the successful result
+            set_cached_data(wallet_address, 'pnl', result)
+            return result
         else:
             print(f"❌ Nansen PnL Error: {response.status_code} - {response.text}")
             # Return mock data on error
@@ -414,19 +476,29 @@ def get_nansen_pnl(wallet_address: str):
         }
 
 def get_nansen_balance(wallet_address: str):
-    """Fetch current balance from Nansen API"""
+    """Fetch current balance from Nansen API (CACHED)"""
+    # Check cache first
+    cached_balance = get_cached_data(wallet_address, 'balance')
+    if cached_balance:
+        print(f"⚡ Cache HIT for balance: {wallet_address[:8]}...")
+        return cached_balance
+    
+    print(f"💾 Cache MISS for balance: {wallet_address[:8]}... fetching from API")
+    
     if not nansen_api_key:
         print(f"⚠️ No Nansen API key - using mock balance for {wallet_address[:8]}...")
         # Return mock data for demo
         balance = round(10000 + hash(wallet_address[:10]) % 100000, 2)
         sol = round(50 + (hash(wallet_address[:8]) % 500), 2)
-        return {
+        mock_data = {
             "total_balance_usd": balance,
             "total_balance_formatted": format_currency(balance),
             "sol_balance": sol,
             "sol_balance_formatted": f"{round(sol, 1)} SOL",
             "token_count": 5 + (hash(wallet_address[:6]) % 20)
         }
+        set_cached_data(wallet_address, 'balance', mock_data)
+        return mock_data
     
     try:
         print(f"💰 Fetching Nansen balance for {wallet_address[:8]}...")
@@ -465,7 +537,7 @@ def get_nansen_balance(wallet_address: str):
                     sol_balance = token.get("token_amount", 0)
                     break
             
-            return {
+            result = {
                 "total_balance_usd": round(total_balance_usd, 2),
                 "total_balance_formatted": format_currency(total_balance_usd),
                 "sol_balance": round(sol_balance, 2),
@@ -473,6 +545,10 @@ def get_nansen_balance(wallet_address: str):
                 "token_count": len(tokens),
                 "tokens": tokens[:5]  # Include top 5 tokens for detail
             }
+            
+            # Cache the successful result
+            set_cached_data(wallet_address, 'balance', result)
+            return result
         else:
             print(f"❌ Nansen Balance Error: {response.status_code} - {response.text}")
             # Return mock data on error
@@ -637,9 +713,39 @@ async def websocket_chat(websocket: WebSocket, chat_room_id: str):
     except WebSocketDisconnect:
         manager.disconnect(websocket, chat_room_id)
 
+@app.get("/api/cache/stats")
+async def cache_stats():
+    """Get cache statistics"""
+    current_time = time.time()
+    cached_wallets = []
+    
+    for wallet, data in nansen_cache.items():
+        age_seconds = current_time - data.get('timestamp', 0)
+        cached_wallets.append({
+            "wallet": f"{wallet[:8]}...{wallet[-4:]}",
+            "age_seconds": round(age_seconds, 1),
+            "has_pnl": 'pnl' in data,
+            "has_balance": 'balance' in data,
+            "expires_in": round(CACHE_TTL_SECONDS - age_seconds, 1)
+        })
+    
+    return {
+        "total_cached": len(nansen_cache),
+        "ttl_seconds": CACHE_TTL_SECONDS,
+        "wallets": cached_wallets
+    }
+
+@app.post("/api/cache/clear")
+async def clear_cache():
+    """Manually clear all cache"""
+    global nansen_cache
+    count = len(nansen_cache)
+    nansen_cache = {}
+    return {"status": "success", "cleared": count}
+
 @app.get("/")
 async def root():
-    return {"message": "Smart Money Tinder API", "status": "running"}
+    return {"message": "Smart Money Tinder API", "status": "running", "cache_enabled": True}
 
 if __name__ == "__main__":
     import uvicorn
