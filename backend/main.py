@@ -140,18 +140,81 @@ def format_currency(amount):
     
     return f"{sign}${formatted}"
 
-# Demo trader bios mapping - REAL trader addresses with varied formatting
-DEMO_TRADER_BIOS = {
-    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
-    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh": "Quant trader, Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
-    "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i": "💎 DIAMOND HANDS OR FOOD STAMPS 💎\nLost my house keys but never my seed phrase\nSurvived: 3 bear markets, 1 divorce",
-    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT": "If it doesn't 100x in 24hrs I'm not interested \n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
-    "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy": "🧙‍♂️ wizard of the orderbook\n\ni see liquidity pools in my dreams\n\nonce made $50k in 10 mins then lost it in 11 lol",
-    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR": "not a whale but I identify as one | bot operator with feelings | married to volatility, divorced from stability",
-    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7": "SPEED TRADER\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
-    "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb": "Professional gambler who found Solana 🎲 Somehow up 300% YTD?? My secret? Being too dumb to panic sell 🤷",
-    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn": "night owl trader\nbest trades happen at 3am coffee-powered memecoin connoisseur\n\n'trust me bro' is my DD"
-}
+# Demo trader full profiles - REAL trader addresses with complete data
+DEMO_TRADERS_DATA = [
+    {
+        "address": "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc",
+        "bio": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
+        "country": "US",
+        "favourite_ct_account": "@cobie",
+        "favourite_trading_venue": "Pumpfun",
+        "asset_choice_6m": "BONK & memecoins"
+    },
+    {
+        "address": "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
+        "bio": "Quant trader, Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
+        "country": "SG",
+        "favourite_ct_account": "@0xfoobar",
+        "favourite_trading_venue": "Jupiter",
+        "asset_choice_6m": "SOL derivatives"
+    },
+    {
+        "address": "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
+        "bio": "💎 DIAMOND HANDS OR FOOD STAMPS 💎\nLost my house keys but never my seed phrase\nSurvived: 3 bear markets, 1 divorce",
+        "country": "GB",
+        "favourite_ct_account": "@derekmajor",
+        "favourite_trading_venue": "Raydium",
+        "asset_choice_6m": "Blue chips only"
+    },
+    {
+        "address": "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
+        "bio": "If it doesn't 100x in 24hrs I'm not interested \n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
+        "country": "AU",
+        "favourite_ct_account": "@milkybullz",
+        "favourite_trading_venue": "GMGN",
+        "asset_choice_6m": "Shit coins to 100x"
+    },
+    {
+        "address": "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
+        "bio": "🧙‍♂️ wizard of the orderbook\n\ni see liquidity pools in my dreams\n\nonce made $50k in 10 mins then lost it in 11 lol",
+        "country": "DE",
+        "favourite_ct_account": "@hsakatrades",
+        "favourite_trading_venue": "Drift",
+        "asset_choice_6m": "Perps & leverage"
+    },
+    {
+        "address": "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
+        "bio": "not a whale but I identify as one | bot operator with feelings | married to volatility, divorced from stability",
+        "country": "NL",
+        "favourite_ct_account": "@inversebrah",
+        "favourite_trading_venue": "Photon",
+        "asset_choice_6m": "MEV opportunities"
+    },
+    {
+        "address": "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
+        "bio": "SPEED TRADER\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
+        "country": "KR",
+        "favourite_ct_account": "@byzantinegeneral",
+        "favourite_trading_venue": "Maestro",
+        "asset_choice_6m": "Fast flips"
+    },
+    {
+        "address": "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
+        "bio": "Professional gambler who found Solana 🎲 Somehow up 300% YTD?? My secret? Being too dumb to panic sell 🤷",
+        "country": "CA",
+        "favourite_ct_account": "@gainzy",
+        "favourite_trading_venue": "NeoBullX",
+        "asset_choice_6m": "Whatever pumps"
+    },
+    {
+        "address": "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn",
+        "bio": "night owl trader\nbest trades happen at 3am coffee-powered memecoin connoisseur\n\n'trust me bro' is my DD",
+        "country": "JP",
+        "favourite_ct_account": "@0xngmi",
+        "favourite_trading_venue": "Trojan",
+        "asset_choice_6m": "Anime coins"
+    }
+]
 
 # Auto-seed demo traders on startup if database is empty
 def run_migrations():
@@ -180,7 +243,7 @@ def run_migrations():
         conn.close()
 
 def auto_seed_demo_traders():
-    """Automatically seed demo traders on startup if database has no users"""
+    """Automatically seed demo traders with FULL profiles on startup if database has no users"""
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     
@@ -189,18 +252,24 @@ def auto_seed_demo_traders():
     user_count = c.fetchone()[0]
     
     if user_count == 0:
-        print("🌱 Database is empty! Auto-seeding demo traders...")
-        for address, bio in DEMO_TRADER_BIOS.items():
+        print("🌱 Database is empty! Auto-seeding demo traders with full profiles...")
+        for idx, trader in enumerate(DEMO_TRADERS_DATA, start=1):
             try:
                 user_id = str(uuid.uuid4())
-                c.execute("INSERT INTO users (id, wallet_address, bio) VALUES (?, ?, ?)",
-                         (user_id, address, bio))
-                print(f"   ✅ Added: {address[:8]}...")
+                c.execute("""INSERT INTO users 
+                            (id, wallet_address, trader_number, bio, country, favourite_ct_account,
+                             worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                         (user_id, trader["address"], idx, trader["bio"], trader["country"],
+                          trader["favourite_ct_account"], None,  # worst_ct_account is optional
+                          trader["favourite_trading_venue"], trader["asset_choice_6m"],
+                          None, datetime.now().isoformat()))  # twitter_account is optional
+                print(f"   ✅ Added Trader #{idx:03d}: {trader['address'][:8]}... ({trader['country']})")
             except Exception as e:
-                print(f"   ⚠️  Skipped {address[:8]}...: {str(e)}")
+                print(f"   ⚠️  Skipped {trader['address'][:8]}...: {str(e)}")
         
         conn.commit()
-        print(f"🎉 Auto-seed complete! Added {len(DEMO_TRADER_BIOS)} demo traders")
+        print(f"🎉 Auto-seed complete! Added {len(DEMO_TRADERS_DATA)} demo traders with full profiles")
     else:
         print(f"✅ Database already has {user_count} users. Skipping auto-seed.")
     
@@ -257,18 +326,8 @@ class ProfileComplete(BaseModel):
     asset_choice_6m: str
     twitter_account: Optional[str] = None  # Optional field
 
-# Demo trader addresses (backup if database is empty) - REAL trader addresses
-DEMO_TRADERS = [
-    "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc",
-    "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
-    "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
-    "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
-    "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
-    "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
-    "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
-    "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
-    "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn"
-]
+# Demo trader addresses list (for quick lookups)
+DEMO_TRADERS = [trader["address"] for trader in DEMO_TRADERS_DATA]
 
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
