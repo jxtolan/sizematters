@@ -27,11 +27,17 @@ def init_db():
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     
-    # Users table
+    # Users table with extended profile fields
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (id TEXT PRIMARY KEY,
                   wallet_address TEXT UNIQUE NOT NULL,
-                  bio TEXT,
+                  trader_number INTEGER UNIQUE,
+                  bio TEXT NOT NULL,
+                  country TEXT NOT NULL,
+                  favourite_ct_account TEXT NOT NULL,
+                  worst_ct_account TEXT NOT NULL,
+                  favourite_trading_venue TEXT NOT NULL,
+                  asset_choice_6m TEXT NOT NULL,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     # Swipes table
@@ -215,8 +221,13 @@ class MessageCreate(BaseModel):
 class NansenConfig(BaseModel):
     api_key: str
 
-class BioUpdate(BaseModel):
+class ProfileComplete(BaseModel):
     bio: str
+    country: str
+    favourite_ct_account: str
+    worst_ct_account: str
+    favourite_trading_venue: str
+    asset_choice_6m: str
 
 # Demo trader addresses (backup if database is empty) - REAL trader addresses
 DEMO_TRADERS = [
@@ -250,6 +261,25 @@ def get_all_trader_wallets():
     
     return all_wallets
 
+# Helper function to get next trader number
+def get_next_trader_number():
+    """Get the next available trader number"""
+    conn = sqlite3.connect('smartmoney.db')
+    c = conn.cursor()
+    c.execute("SELECT MAX(trader_number) FROM users")
+    result = c.fetchone()
+    conn.close()
+    
+    max_number = result[0] if result[0] is not None else 0
+    return max_number + 1
+
+def format_trader_number(number):
+    """Format trader number with leading zeros and commas (e.g., #001, #1,234)"""
+    if number < 1000:
+        return f"#{number:03d}"  # #001, #099, #999
+    else:
+        return f"#{number:,}"  # #1,234, #10,001
+
 # Store Nansen API key - Load from environment variable
 nansen_api_key = os.getenv("NANSEN_API_KEY", "")
 if nansen_api_key:
@@ -265,40 +295,96 @@ async def set_nansen_config(config: NansenConfig):
     return {"status": "success", "message": "Nansen API key configured"}
 
 @app.post("/api/users")
-async def create_user(user: UserCreate):
-    """Create a new user account"""
+async def check_user(user: UserCreate):
+    """Check if user exists and return their profile status"""
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     
     # Check if user exists
-    c.execute("SELECT id FROM users WHERE wallet_address = ?", (user.wallet_address,))
+    c.execute("""SELECT id, trader_number, bio, country, favourite_ct_account, 
+                 worst_ct_account, favourite_trading_venue, asset_choice_6m 
+                 FROM users WHERE wallet_address = ?""", (user.wallet_address,))
     existing_user = c.fetchone()
-    
-    if existing_user:
-        conn.close()
-        return {"user_id": existing_user[0], "wallet_address": user.wallet_address, "exists": True}
-    
-    # Create new user
-    user_id = str(uuid.uuid4())
-    c.execute("INSERT INTO users (id, wallet_address) VALUES (?, ?)", 
-              (user_id, user.wallet_address))
-    conn.commit()
     conn.close()
     
-    return {"user_id": user_id, "wallet_address": user.wallet_address, "exists": False}
+    if existing_user:
+        # User exists, check if profile is complete
+        profile_complete = all([
+            existing_user[2],  # bio
+            existing_user[3],  # country
+            existing_user[4],  # favourite_ct_account
+            existing_user[5],  # worst_ct_account
+            existing_user[6],  # favourite_trading_venue
+            existing_user[7]   # asset_choice_6m
+        ])
+        
+        return {
+            "user_id": existing_user[0],
+            "trader_number": existing_user[1],
+            "trader_number_formatted": format_trader_number(existing_user[1]) if existing_user[1] else None,
+            "wallet_address": user.wallet_address,
+            "exists": True,
+            "profile_complete": profile_complete
+        }
+    
+    # User doesn't exist yet
+    return {
+        "user_id": None,
+        "wallet_address": user.wallet_address,
+        "exists": False,
+        "profile_complete": False
+    }
 
-@app.put("/api/users/{wallet_address}/bio")
-async def update_user_bio(wallet_address: str, bio_data: BioUpdate):
-    """Update user's bio"""
+@app.post("/api/users/{wallet_address}/complete-profile")
+async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
+    """Complete user profile with all required fields"""
     conn = sqlite3.connect('smartmoney.db')
     c = conn.cursor()
     
-    c.execute("UPDATE users SET bio = ? WHERE wallet_address = ?", 
-              (bio_data.bio, wallet_address))
-    conn.commit()
-    conn.close()
-    
-    return {"status": "success", "message": "Bio updated"}
+    try:
+        # Check if user already exists
+        c.execute("SELECT id, trader_number FROM users WHERE wallet_address = ?", (wallet_address,))
+        existing_user = c.fetchone()
+        
+        if existing_user:
+            # Update existing user
+            c.execute("""UPDATE users 
+                        SET bio = ?, country = ?, favourite_ct_account = ?, 
+                            worst_ct_account = ?, favourite_trading_venue = ?, 
+                            asset_choice_6m = ?
+                        WHERE wallet_address = ?""",
+                     (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
+                      profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                      profile_data.asset_choice_6m, wallet_address))
+            user_id = existing_user[0]
+            trader_number = existing_user[1]
+        else:
+            # Create new user with trader number
+            user_id = str(uuid.uuid4())
+            trader_number = get_next_trader_number()
+            
+            c.execute("""INSERT INTO users 
+                        (id, wallet_address, trader_number, bio, country, favourite_ct_account,
+                         worst_ct_account, favourite_trading_venue, asset_choice_6m)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                     (user_id, wallet_address, trader_number, profile_data.bio, 
+                      profile_data.country, profile_data.favourite_ct_account,
+                      profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                      profile_data.asset_choice_6m))
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "trader_number": trader_number,
+            "trader_number_formatted": format_trader_number(trader_number),
+            "message": "Profile completed successfully"
+        }
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Failed to complete profile: {str(e)}")
 
 @app.get("/api/profiles/{wallet_address}")
 async def get_profiles(wallet_address: str):
@@ -349,20 +435,47 @@ async def get_profiles(wallet_address: str):
                 print(f"⚠️ Skipping real user {wallet[:8]}... - No valid Nansen data")
                 continue
         
-        # Get bio from database
+        # Get profile data from database
         conn = sqlite3.connect('smartmoney.db')
         c = conn.cursor()
-        c.execute("SELECT bio FROM users WHERE wallet_address = ?", (wallet,))
-        bio_result = c.fetchone()
+        c.execute("""SELECT trader_number, bio, country, favourite_ct_account, 
+                     worst_ct_account, favourite_trading_venue, asset_choice_6m 
+                     FROM users WHERE wallet_address = ?""", (wallet,))
+        profile_result = c.fetchone()
         conn.close()
-        bio = bio_result[0] if bio_result else None
+        
+        if profile_result:
+            trader_number = profile_result[0]
+            trader_display = format_trader_number(trader_number) if trader_number else "Demo"
+            profile_data = {
+                "trader_number": trader_number,
+                "trader_number_formatted": trader_display,
+                "bio": profile_result[1],
+                "country": profile_result[2],
+                "favourite_ct_account": profile_result[3],
+                "worst_ct_account": profile_result[4],
+                "favourite_trading_venue": profile_result[5],
+                "asset_choice_6m": profile_result[6]
+            }
+        else:
+            # Demo profile
+            profile_data = {
+                "trader_number": None,
+                "trader_number_formatted": "Demo",
+                "bio": None,
+                "country": None,
+                "favourite_ct_account": None,
+                "worst_ct_account": None,
+                "favourite_trading_venue": None,
+                "asset_choice_6m": None
+            }
         
         profiles.append({
             "wallet_address": wallet,
             "pnl_summary": pnl_data,
             "balance": balance_data,
-            "bio": bio,
-            "is_demo": is_demo(wallet)
+            "is_demo": is_demo(wallet),
+            **profile_data
         })
     
     print(f"📊 Returning {len(profiles)} valid profiles")
@@ -736,6 +849,26 @@ async def websocket_chat(websocket: WebSocket, chat_room_id: str):
             # Keep connection alive
     except WebSocketDisconnect:
         manager.disconnect(websocket, chat_room_id)
+
+@app.get("/api/config/trading-venues")
+async def get_trading_venues():
+    """Get list of available trading venues"""
+    return {
+        "venues": [
+            "Pumpfun",
+            "GMGN",
+            "Photon",
+            "Jupiter",
+            "Drift",
+            "Bloombot",
+            "NeoBullX",
+            "Trojan",
+            "Raydium",
+            "Orca",
+            "Maestro",
+            "Other"
+        ]
+    }
 
 @app.get("/api/cache/stats")
 async def cache_stats():
