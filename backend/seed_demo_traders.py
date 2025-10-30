@@ -8,96 +8,79 @@ import uuid
 from datetime import datetime
 
 # REAL Solana trader addresses with varied formatting for natural look + extended profiles
+# Note: Optional fields (worst_ct_account, twitter_account) are left empty to look more realistic
 DEMO_TRADERS = [
     {
         "address": "ERjMXMF6AVnMckiQb6zvTEcaCVc7iBpNqmtbNVjeKCpc",
         "bio": "degen since '21. made 420% on BONK before it was cool\n\nonly trade in crocs btw. YOLO is my risk management 💀",
         "country": "US",
         "favourite_ct_account": "@cobie",
-        "worst_ct_account": "@bitboy",
         "favourite_trading_venue": "Pumpfun",
-        "asset_choice_6m": "BONK & memecoins",
-        "twitter_account": "@whale_hunter_23"
+        "asset_choice_6m": "BONK & memecoins"
     },
     {
         "address": "99HXufoq4yepb8hNKgd1ghXRKMwAfMoXCZjAdXxXyEUh",
         "bio": "Quant trader, Got rugged once and never recovered emotionally... 200 IQ, 0 social skills. Will marry whoever invented MEV fr",
         "country": "SG",
         "favourite_ct_account": "@0xfoobar",
-        "worst_ct_account": "@elonmusk",
         "favourite_trading_venue": "Jupiter",
-        "asset_choice_6m": "SOL derivatives",
-        "twitter_account": "@quant_degen_88"
+        "asset_choice_6m": "SOL derivatives"
     },
     {
         "address": "Au1GUWfcadx7jMzhsg6gHGUgViYJrnPfL1vbdqnvLK4i",
         "bio": "💎 DIAMOND HANDS OR FOOD STAMPS 💎\nLost my house keys but never my seed phrase\nSurvived: 3 bear markets, 1 divorce",
         "country": "GB",
         "favourite_ct_account": "@derekmajor",
-        "worst_ct_account": "@justinsuntron",
         "favourite_trading_venue": "Raydium",
-        "asset_choice_6m": "Blue chips only",
-        "twitter_account": "@diamond_dave_sol"
+        "asset_choice_6m": "Blue chips only"
     },
     {
         "address": "8J6UcrwcSj6i9FdGeLYHUWNYiJrqhEAVJbWhjtBZvwHT",
         "bio": "If it doesn't 100x in 24hrs I'm not interested \n\nSleep is for people without alpha. My therapist told me to log off (I didn't)",
         "country": "AU",
         "favourite_ct_account": "@milkybullz",
-        "worst_ct_account": "@benlilly",
         "favourite_trading_venue": "GMGN",
-        "asset_choice_6m": "Shit coins to 100x",
-        "twitter_account": "@100x_or_bust"
+        "asset_choice_6m": "Shit coins to 100x"
     },
     {
         "address": "EdAsdt7JY6fcBYNbzY4HxXTEWSupiQMdRS3KjNLuSLKy",
         "bio": "🧙‍♂️ wizard of the orderbook\n\ni see liquidity pools in my dreams\n\nonce made $50k in 10 mins then lost it in 11 lol",
         "country": "DE",
         "favourite_ct_account": "@hsakatrades",
-        "worst_ct_account": "@cryptokong",
         "favourite_trading_venue": "Drift",
-        "asset_choice_6m": "Perps & leverage",
-        "twitter_account": "@orderbook_wizard"
+        "asset_choice_6m": "Perps & leverage"
     },
     {
         "address": "7Hkpf3NJwCdcnDqwZMTR1d76pHnfeyqnP8vxrV4TLKHR",
         "bio": "not a whale but I identify as one | bot operator with feelings | married to volatility, divorced from stability",
         "country": "NL",
         "favourite_ct_account": "@inversebrah",
-        "worst_ct_account": "@cryptocobain",
         "favourite_trading_venue": "Photon",
-        "asset_choice_6m": "MEV opportunities",
-        "twitter_account": "@mev_bot_whisperer"
+        "asset_choice_6m": "MEV opportunities"
     },
     {
         "address": "EvwaHadVPP7bTdmfc4cxk3Pz5sr638sVUq1BJY8HArW7",
         "bio": "SPEED TRADER\nHaven't touched grass since Jupiter launched\n(living on energy drinks)",
         "country": "KR",
         "favourite_ct_account": "@byzantinegeneral",
-        "worst_ct_account": "@davidgokhshtein",
         "favourite_trading_venue": "Maestro",
-        "asset_choice_6m": "Fast flips",
-        "twitter_account": "@speedrun_sol"
+        "asset_choice_6m": "Fast flips"
     },
     {
         "address": "2CSqY1nUFZbuznxY3PUMWdBUif6WAqsTWtrfZKJQUgTb",
         "bio": "Professional gambler who found Solana 🎲 Somehow up 300% YTD?? My secret? Being too dumb to panic sell 🤷",
         "country": "CA",
         "favourite_ct_account": "@gainzy",
-        "worst_ct_account": "@pauly0x",
         "favourite_trading_venue": "NeoBullX",
-        "asset_choice_6m": "Whatever pumps",
-        "twitter_account": "@lucky_gambler_sol"
+        "asset_choice_6m": "Whatever pumps"
     },
     {
         "address": "6jMQdtwEAfoBvKdE4HYGTdHCRSxYfCrgPmjQ6rnGr5mn",
         "bio": "night owl trader\nbest trades happen at 3am coffee-powered memecoin connoisseur\n\n'trust me bro' is my DD",
         "country": "JP",
         "favourite_ct_account": "@0xngmi",
-        "worst_ct_account": "@altsseason",
         "favourite_trading_venue": "Trojan",
-        "asset_choice_6m": "Anime coins",
-        "twitter_account": "@3am_trading_god"
+        "asset_choice_6m": "Anime coins"
     }
 ]
 
@@ -118,26 +101,26 @@ def seed_database():
             existing = c.fetchone()
             
             if existing:
-                # Update existing user with new fields
+                # Update existing user with new fields (optional fields default to None)
                 c.execute("""UPDATE users 
                             SET bio = ?, country = ?, favourite_ct_account = ?,
                                 worst_ct_account = ?, favourite_trading_venue = ?,
                                 asset_choice_6m = ?, twitter_account = ?
                             WHERE wallet_address = ?""",
                          (trader["bio"], trader["country"], trader["favourite_ct_account"],
-                          trader["worst_ct_account"], trader["favourite_trading_venue"],
+                          trader.get("worst_ct_account"), trader["favourite_trading_venue"],
                           trader["asset_choice_6m"], trader.get("twitter_account"), trader["address"]))
                 print(f"✏️  Updated: {trader['address'][:8]}... - {trader['country']} - {trader['favourite_trading_venue']}")
                 skipped += 1
             else:
-                # Create new user with all fields
+                # Create new user with all fields (optional fields default to None)
                 user_id = str(uuid.uuid4())
                 c.execute("""INSERT INTO users 
                             (id, wallet_address, trader_number, bio, country, favourite_ct_account,
                              worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account, created_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                          (user_id, trader["address"], idx, trader["bio"], trader["country"],
-                          trader["favourite_ct_account"], trader["worst_ct_account"],
+                          trader["favourite_ct_account"], trader.get("worst_ct_account"),
                           trader["favourite_trading_venue"], trader["asset_choice_6m"],
                           trader.get("twitter_account"), datetime.now().isoformat()))
                 print(f"✅ Added #{idx:03d}: {trader['address'][:8]}... - {trader['country']} {trader['favourite_trading_venue']}")
