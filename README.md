@@ -7,6 +7,7 @@ Smart Money Tinder is a revolutionary platform that allows you to discover and c
 ![Smart Money Tinder](https://img.shields.io/badge/Solana-Wallet-9945FF?style=for-the-badge&logo=solana)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi)
 ![Next.js](https://img.shields.io/badge/Next.js-Frontend-000000?style=for-the-badge&logo=next.js)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-316192?style=for-the-badge&logo=postgresql)
 
 ## ✨ Features
 
@@ -14,312 +15,352 @@ Smart Money Tinder is a revolutionary platform that allows you to discover and c
 - 📊 **Real-time Trading Data** - View 90-day PnL summaries and current balance via Nansen API
 - 💚 **Tinder-style Swiping** - Swipe right to like, left to pass
 - 🎉 **Instant Matching** - When two traders like each other, it's an instant match!
-- 💬 **Real-time Chat** - Group chat with matched traders using WebSockets
+- 💬 **Real-time Chat** - WebSocket-powered instant messaging
 - 🎨 **Beautiful UI** - Modern, responsive design with smooth animations
+- 💾 **Persistent Storage** - PostgreSQL database that never loses your data
+- 🚀 **Auto-seeding** - 9 demo traders automatically added on first run
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
 smartmoneytinder/
-├── backend/           # FastAPI backend server
-│   ├── main.py       # API endpoints & WebSocket chat
-│   └── requirements.txt
-└── frontend/          # Next.js frontend application
-    ├── app/
-    │   ├── layout.tsx
-    │   ├── page.tsx
-    │   └── globals.css
-    └── components/
-        ├── WalletProvider.tsx
-        ├── SwipeCard.tsx
-        ├── Matches.tsx
-        └── Chat.tsx
+├── backend/              # FastAPI backend server
+│   ├── main.py          # API endpoints & WebSocket chat
+│   ├── database.py      # Database abstraction (SQLite/PostgreSQL)
+│   ├── requirements.txt # Python dependencies
+│   └── test_db_connection.py  # Database test script
+├── frontend/            # Next.js frontend application
+│   ├── app/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   └── components/
+│       ├── WalletProvider.tsx
+│       ├── SwipeCard.tsx
+│       ├── Matches.tsx
+│       ├── MyProfile.tsx
+│       └── Chat.tsx
+├── QUICKSTART_POSTGRESQL.md  # Deployment guide
+└── README.md            # This file
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Local Development
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.12+
 - Node.js 18+
 - npm or yarn
 - Solana wallet (Phantom recommended)
-- Nansen API key (optional - demo works with mock data)
+- Nansen API key (optional - works with mock data)
 
 ### Backend Setup
 
-1. **Navigate to the backend directory:**
 ```bash
+# 1. Navigate to backend
 cd backend
-```
 
-2. **Create a virtual environment:**
-```bash
-python -m venv venv
+# 2. Create virtual environment
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-3. **Install dependencies:**
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Test database connection (optional)
+python3 test_db_connection.py
+
+# 5. Run the server
+python3 main.py
 ```
 
-4. **Populate the database with smart trader addresses:**
-```bash
-python populate_traders.py
-```
+Backend runs on `http://localhost:8000`
 
-This will add 66 real smart trader addresses from the CSV to your database!
-
-5. **Run the server:**
-```bash
-python main.py
-```
-
-The backend will start on `http://localhost:8000`
+**Note:** Database automatically:
+- Creates tables on first run
+- Seeds 9 demo traders if empty
+- Uses SQLite locally (no setup needed!)
 
 ### Frontend Setup
 
-1. **Navigate to the frontend directory:**
 ```bash
+# 1. Navigate to frontend
 cd frontend
-```
 
-2. **Install dependencies:**
-```bash
+# 2. Install dependencies
 npm install
-# or
-yarn install
-```
 
-3. **Run the development server:**
-```bash
+# 3. Run development server
 npm run dev
-# or
-yarn dev
 ```
 
-The frontend will start on `http://localhost:3000`
+Frontend runs on `http://localhost:3000`
 
 ## 🎮 How to Use
 
-1. **Connect Your Wallet**
-   - Click "Select Wallet" on the homepage
-   - Choose your Solana wallet (Phantom, Solflare, etc.)
-   - Approve the connection
+### 1. Connect Your Wallet
+- Click "Select Wallet" on the homepage
+- Choose your Solana wallet (Phantom, Solflare, etc.)
+- Approve the connection
 
-2. **Start Swiping Through REAL Smart Traders! 🔥**
-   - View profiles of 66+ verified smart traders from Nansen
-   - See their real-time PnL and balance data via Nansen API
-   - Swipe right (💚) with awesome celebration animations!
-   - Swipe left (❌) with rejection effects
-   - Or use the buttons for instant animated swipes
+### 2. Complete Your Profile
+- Add your bio, country, and trading preferences
+- Get assigned a unique trader number (e.g., #001, #042)
 
-3. **Match & Chat**
-   - When you and another trader both swipe right, it's a match! 🎉
-   - Navigate to the "Matches" tab
-   - Click on a match to start chatting in real-time
+### 3. Start Swiping! 🔥
+- View profiles of verified smart traders
+- See real-time PnL and balance data (via Nansen API)
+- Swipe right (💚) to like, left (❌) to pass
+- Watch the celebration animations!
 
-4. **Configure Nansen API (Optional)**
-   - Click the settings icon (⚙️) in the header
-   - Enter your Nansen API key for real-time data
-   - Without an API key, the demo uses realistic mock data
+### 4. Match & Chat
+- When you both swipe right → Instant match! 🎉
+- Navigate to "Matches" tab
+- Click on a match to start chatting in real-time
 
-## 🎬 Swipe Animations
+## 🚀 Deploy to Production (Render)
 
-### Swipe Right (LIKE) 💚
-- Card flies off screen to the right
-- "LIKE" badge spins and grows
-- 8 celebration particles explode outward
-- Smooth rotation animation
+**See `QUICKSTART_POSTGRESQL.md` for full deployment guide.**
 
-### Swipe Left (NOPE) ❌
-- Card flies off screen to the left
-- "NOPE" badge spins dramatically
-- Red flash effect
-- Card fades out smoothly
+Quick summary:
 
-### Button Interactions
-- Hover: Scale up and rotate
-- Tap: Squeeze and rotate more
-- Disabled during animation
+1. **Push code to GitHub**
+2. **Create PostgreSQL database on Render** (free tier available)
+3. **Deploy backend web service** with `DATABASE_URL` environment variable
+4. **Deploy frontend** (Vercel or Render Static Site)
+5. **Done!** Your data now persists forever 🎉
 
-## 🔧 API Endpoints
+**Deployment time:** ~15 minutes
+
+## 🔧 Key API Endpoints
 
 ### User Management
-- `POST /api/users` - Create or get user account
-- `GET /api/profiles/{wallet_address}` - Get profiles to swipe
+- `POST /api/users` - Check if user exists
+- `POST /api/users/{wallet}/complete-profile` - Complete user profile
+- `GET /api/users/{wallet}/profile` - Get user profile
+- `PUT /api/users/{wallet}/profile` - Update user profile
 
 ### Swiping & Matching
-- `POST /api/swipe` - Record a swipe action
-- `GET /api/matches/{wallet_address}` - Get user's matches
+- `GET /api/profiles/{wallet}` - Get profiles to swipe through
+- `POST /api/swipe` - Record a swipe action (creates match if mutual)
+- `GET /api/matches/{wallet}` - Get user's matches
 
 ### Chat
-- `GET /api/chat/{chat_room_id}/messages` - Get chat messages
+- `GET /api/chat/{room_id}/messages` - Get chat messages
 - `POST /api/chat/message` - Send a message
-- `WS /ws/chat/{chat_room_id}` - WebSocket for real-time chat
+- `WS /ws/chat/{room_id}` - WebSocket for real-time chat
 
 ### Configuration
 - `POST /api/config/nansen` - Set Nansen API key
-
-## 🔌 Nansen API Integration
-
-The platform integrates with Nansen's Profiler API to fetch:
-
-### PnL Summary (90 days)
-```python
-POST https://api.nansen.ai/api/v1/profiler/address/pnl-summary
-{
-  "address": "wallet_address",
-  "chain": "solana",
-  "date": {
-    "from": "2025-08-01T00:00:00Z",
-    "to": "2025-10-28T23:59:59Z"
-  }
-}
-```
-
-### Current Balance
-```python
-POST https://api.nansen.ai/api/v1/profiler/address/current-balance
-{
-  "address": "wallet_address",
-  "chain": "solana",
-  "hide_spam_token": true,
-  "pagination": {
-    "page": 1,
-    "per_page": 10
-  }
-}
-```
+- `GET /api/config/trading-venues` - Get list of trading venues
 
 ## 🎨 Tech Stack
 
 ### Frontend
-- **Next.js 14** - React framework
+- **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **Solana Wallet Adapter** - Wallet integration
+- **Tailwind CSS** - Utility-first styling
+- **Solana Wallet Adapter** - Multi-wallet support
 - **Axios** - HTTP client
-- **React Hot Toast** - Notifications
+- **React Hot Toast** - Beautiful notifications
 
 ### Backend
-- **FastAPI** - Modern Python web framework
-- **SQLite** - Database (easily upgradeable to PostgreSQL)
+- **FastAPI** - Modern async Python framework
+- **PostgreSQL** - Production database (persistent storage)
+- **SQLite** - Local development database
+- **psycopg2** - PostgreSQL adapter
 - **WebSockets** - Real-time chat
-- **Requests** - Nansen API integration
 - **Pydantic** - Data validation
 
-## 🛠️ Customization
+### Infrastructure
+- **Vercel** - Frontend hosting
+- **Render** - Backend & database hosting
+- **GitHub** - Version control & CI/CD
 
-### Adding More Sample Wallets
-Edit `SAMPLE_SOLANA_WALLETS` in `backend/main.py`:
-```python
-SAMPLE_SOLANA_WALLETS = [
-    "your_wallet_address_1",
-    "your_wallet_address_2",
-    # Add more...
-]
+## 🗄️ Database
+
+### Automatic Switching
+- **Local:** Uses SQLite (`smartmoney.db`) - no setup required
+- **Production:** Uses PostgreSQL when `DATABASE_URL` is set
+
+### Schema
+```sql
+users (
+  id, wallet_address, trader_number, bio, country,
+  favourite_ct_account, worst_ct_account,
+  favourite_trading_venue, asset_choice_6m,
+  twitter_account, created_at
+)
+
+swipes (id, user_id, target_wallet, direction, created_at)
+matches (id, user1_wallet, user2_wallet, chat_room_id, created_at)
+messages (id, chat_room_id, sender_wallet, message, created_at)
 ```
 
-### Changing Network
-Edit `frontend/components/WalletProvider.tsx`:
-```typescript
-const network = WalletAdapterNetwork.Mainnet  // or Devnet/Testnet
+### Key Features
+- ✅ Auto-migration on startup
+- ✅ Auto-seeding of demo traders
+- ✅ Persistent storage (PostgreSQL)
+- ✅ 30-minute API response cache
+- ✅ Optimized profile loading
+
+## 🔌 Nansen API Integration
+
+Fetches real trader data via Nansen's Profiler API:
+
+### PnL Summary (90 days with all-time fallback)
+- Total realized PnL (USD)
+- PnL percentage
+- Win rate
+- Total trades
+- Traded token count
+
+### Current Balance
+- Total balance (USD)
+- SOL balance
+- Token count
+- Top holdings
+
+**Mock data available** if no API key is provided.
+
+## 🎬 Swipe Animations
+
+### Swipe Right (LIKE) 💚
+- Card flies off to the right with rotation
+- "LIKE" badge spins and grows
+- 8 celebration particles explode outward
+- Smooth fade-out
+
+### Swipe Left (NOPE) ❌
+- Card flies off to the left
+- "NOPE" badge spins dramatically
+- Red flash effect
+- Smooth fade-out
+
+### Button Interactions
+- Hover effects with scale & rotation
+- Tap effects with squeeze animation
+- Disabled during animation to prevent spam
+
+## 🛠️ Environment Variables
+
+### Backend (Required for Production)
+```bash
+DATABASE_URL=postgresql://user:pass@host:5432/db  # PostgreSQL connection
+NANSEN_API_KEY=your_nansen_key_here              # Optional for real data
+PYTHON_VERSION=3.12.0                            # Force Python version
 ```
 
-### Styling
-Customize colors in `frontend/tailwind.config.js`:
-```javascript
-theme: {
-  extend: {
-    colors: {
-      primary: '#9945FF',    // Purple
-      secondary: '#14F195',  // Green
-    },
-  },
-}
+### Frontend
+```bash
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
 ```
 
-## 📱 Screenshots
+## 🧪 Testing
 
-### Landing Page
-Beautiful gradient background with wallet connection
+### Test Database Connection
+```bash
+cd backend
+python3 test_db_connection.py
+```
 
-### Swipe Interface
-Tinder-style cards showing trader stats with smooth animations
+### Test API
+```bash
+# Start backend
+python3 main.py
 
-### Matches & Chat
-Real-time messaging with matched traders
+# Visit in browser
+open http://localhost:8000
+# Should see: {"message": "Smart Money Tinder API", "status": "running"}
+```
 
-## 🚧 Future Enhancements
+## 🚧 Troubleshooting
 
-- [ ] User profiles with trading strategies
-- [ ] Advanced filtering (PnL range, balance, win rate)
-- [ ] Trading groups and communities
-- [ ] Portfolio sharing
-- [ ] Trading signals and alerts
-- [ ] Mobile app (React Native)
-- [ ] Push notifications for matches
-- [ ] Video chat integration
-- [ ] Leaderboards
+### "No module named 'psycopg2'"
+```bash
+pip install -r requirements.txt
+```
 
-## 🤝 Contributing
+### "Could not connect to database"
+Check `DATABASE_URL` environment variable format:
+```
+postgresql://user:password@host:5432/database
+```
 
-This is a demo project, but contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-- Improve documentation
+### Profile loading slow
+- Cache is active (30-min TTL)
+- Loads 8 profiles (optimized for speed)
+- Mock data is instant (no API calls)
+
+### Demo traders not showing
+- Database might have existing users
+- Check logs for auto-seed message
+- Manual seed not needed (auto-seeding built-in)
+
+## 📊 Performance Optimizations
+
+- ✅ **30-minute API response cache** (reduced from 5 minutes)
+- ✅ **Loads 8 profiles** instead of 10 (faster initial load)
+- ✅ **Checks 12 wallets** instead of 20 (less API calls)
+- ✅ **Skips profiles with no valid data** (real users only)
+- ✅ **WebSocket connection pooling** for chat
+- ✅ **PostgreSQL connection reuse**
+
+## 🔐 Security Notes
+
+For production deployment:
+- ✅ PostgreSQL (not SQLite)
+- ✅ Environment variables for secrets
+- ⚠️ Add rate limiting (TODO)
+- ⚠️ Add wallet signature verification (TODO)
+- ⚠️ Enable CORS only for your domain (currently allows all)
+- ⚠️ Add input sanitization
+- ⚠️ Implement proper auth middleware
+
+## 🚀 Deployment Checklist
+
+- [ ] Code pushed to GitHub
+- [ ] PostgreSQL database created on Render
+- [ ] Backend deployed with `DATABASE_URL` set
+- [ ] Frontend deployed with `NEXT_PUBLIC_API_URL` set
+- [ ] Test wallet connection
+- [ ] Test profile creation
+- [ ] Test swiping
+- [ ] Test matching
+- [ ] Test chat
+- [ ] Verify data persists after restart ✨
+
+## 💰 Hosting Costs
+
+### Free Tier (Perfect for MVP)
+- Render PostgreSQL: 1GB storage (free)
+- Render Web Service: 750 hours/month (free)
+- Vercel Frontend: Unlimited (free)
+- **Total: $0/month**
+
+### Production Tier
+- Render PostgreSQL: $7/month (10GB + backups)
+- Render Web Service: $7/month (always-on)
+- Vercel Pro: $20/month (optional)
+- **Total: $14-34/month**
 
 ## 📄 License
 
 MIT License - feel free to use this project for your own purposes!
 
-## 👨‍💻 Developer Notes
-
-### Database Schema
-The SQLite database includes:
-- **users** - Wallet addresses and user IDs
-- **swipes** - Record of all swipe actions
-- **matches** - Successful mutual swipes
-- **messages** - Chat messages
-
-### WebSocket Implementation
-Real-time chat uses WebSocket connections managed by a `ConnectionManager` class that:
-- Maintains active connections per chat room
-- Broadcasts messages to all participants
-- Handles disconnections gracefully
-
-### Security Considerations
-For production deployment:
-- Use environment variables for API keys
-- Implement rate limiting
-- Add authentication middleware
-- Use PostgreSQL instead of SQLite
-- Enable HTTPS
-- Implement proper CORS policies
-- Add input sanitization
-- Implement message encryption
-
-## 🆘 Support
-
-Need help? Reach out:
-- Check the [Issues](https://github.com/yourrepo/issues) page
-- Join our Discord community
-- Email: support@smartmoneytinder.com
-
 ## 🎉 Acknowledgments
 
 - **Nansen** - For the amazing analytics API
 - **Solana** - For the fast, low-cost blockchain
-- **Vercel** - For Next.js and deployment platform
+- **Render** - For easy deployment and PostgreSQL hosting
+- **Vercel** - For Next.js and frontend hosting
 - **FastAPI** - For the incredible Python framework
 
 ---
 
-Built with ❤️ by your development team
+**Built with ❤️ for the Solana trading community**
 
 **Ready to find your trading soulmate? Let's swipe! 🚀**
 
+For deployment help, see `QUICKSTART_POSTGRESQL.md`
