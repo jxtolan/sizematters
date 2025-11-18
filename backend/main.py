@@ -28,7 +28,7 @@ db.init_db()
 # In-memory cache for Nansen API responses
 # Structure: { wallet_address: { 'pnl': {...}, 'balance': {...}, 'timestamp': 123456 } }
 nansen_cache = {}
-CACHE_TTL_SECONDS = 300  # 5 minutes
+CACHE_TTL_SECONDS = 1800  # 30 minutes (Nansen data doesn't change that fast)
 
 def get_cached_data(wallet_address: str, data_type: str):
     """Get cached Nansen data if not expired"""
@@ -567,8 +567,8 @@ async def get_profiles(wallet_address: str):
     profiles = []
     is_demo = lambda w: w in DEMO_TRADERS
     
-    for wallet in available_wallets[:20]:  # Check more to account for skipped profiles
-        if len(profiles) >= 10:  # Stop once we have 10 valid profiles
+    for wallet in available_wallets[:12]:  # Check 12 to get ~10 valid profiles
+        if len(profiles) >= 8:  # Return 8 profiles (faster, user can load more)
             break
             
         # Get Nansen data
