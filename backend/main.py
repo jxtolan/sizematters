@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional, Dict
 import json
 import requests
@@ -10,6 +10,7 @@ from collections import defaultdict
 import os
 import time
 from database import db
+import re
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -21,6 +22,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Authentication configuration
+REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "false").lower() == "true"
+if REQUIRE_AUTH:
+    print("🔒 Authentication ENABLED - All endpoints require wallet signatures")
+else:
+    print("⚠️  Authentication DISABLED - Running in development mode (NOT SECURE FOR PRODUCTION!)")
+
+# Simple authentication dependency
+async def get_authenticated_wallet(
+    x_wallet_address: Optional[str] = Header(None)
+) -> Optional[str]:
+    """
+    Get authenticated wallet address from headers
+    For now, just returns the wallet from header
+    TODO: Add signature verification for production
+    """
+    if REQUIRE_AUTH and not x_wallet_address:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Please provide X-Wallet-Address header"
+        )
+    return x_wallet_address
+
+def verify_wallet_ownership(wallet_address: str, authenticated_wallet: Optional[str]):
+    """Verify that authenticated wallet matches the requested wallet"""
+    if REQUIRE_AUTH:
+        if not authenticated_wallet:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        if wallet_address != authenticated_wallet:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only access your own resources"
+            )
+    # In development mode, just log a warning
+    elif authenticated_wallet and wallet_address != authenticated_wallet:
+        print(f"⚠️  WARNING: Wallet mismatch in dev mode - {authenticated_wallet} accessing {wallet_address}")
 
 # Database setup
 db.init_db()
@@ -271,6 +309,17 @@ class MessageCreate(BaseModel):
     chat_room_id: str
     sender_wallet: str
     message: str
+    
+    @validator('message')
+    def message_must_be_valid(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Message cannot be empty')
+        if len(v) > 5000:
+            raise ValueError('Message must be 5000 characters or less')
+        # Basic XSS prevention
+        if '<script' in v.lower() or 'javascript:' in v.lower():
+            raise ValueError('Message contains invalid content')
+        return v.strip()
 
 class NansenConfig(BaseModel):
     api_key: str
@@ -283,6 +332,45 @@ class ProfileComplete(BaseModel):
     favourite_trading_venue: str
     asset_choice_6m: str
     twitter_account: Optional[str] = None  # Optional field
+    
+    @validator('bio')
+    def bio_must_not_be_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Bio cannot be empty')
+        if len(v) > 500:
+            raise ValueError('Bio must be 500 characters or less')
+        # Basic XSS prevention
+        if '<script' in v.lower() or 'javascript:' in v.lower():
+            raise ValueError('Bio contains invalid content')
+        return v.strip()
+    
+    @validator('country')
+    def country_must_not_be_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Country cannot be empty')
+        if len(v) > 100:
+            raise ValueError('Country must be 100 characters or less')
+        return v.strip()
+    
+    @validator('favourite_ct_account')
+    def ct_account_must_not_be_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Favourite CT account cannot be empty')
+        if len(v) > 100:
+            raise ValueError('CT account must be 100 characters or less')
+        return v.strip()
+    
+    @validator('favourite_trading_venue')
+    def venue_must_not_be_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Favourite trading venue cannot be empty')
+        return v.strip()
+    
+    @validator('asset_choice_6m')
+    def asset_choice_must_not_be_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Asset choice cannot be empty')
+        return v.strip()
 
 # Demo trader addresses list (for quick lookups)
 DEMO_TRADERS = [trader["address"] for trader in DEMO_TRADERS_DATA]
@@ -404,8 +492,15 @@ async def check_user(user: UserCreate):
     }
 
 @app.post("/api/users/{wallet_address}/complete-profile")
-async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
-    """Complete user profile with all required fields"""
+async def complete_profile(
+    wallet_address: str, 
+    profile_data: ProfileComplete,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Complete user profile with all required fields (AUTH PROTECTED)"""
+    # Verify wallet ownership
+    verify_wallet_ownership(wallet_address, authenticated_wallet)
+    
     ph = db.placeholder()
     
     try:
@@ -507,8 +602,15 @@ async def get_my_profile(wallet_address: str):
         }
 
 @app.put("/api/users/{wallet_address}/profile")
-async def update_my_profile(wallet_address: str, profile_data: ProfileComplete):
-    """Update user's own profile"""
+async def update_my_profile(
+    wallet_address: str, 
+    profile_data: ProfileComplete,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Update user's own profile (AUTH PROTECTED)"""
+    # Verify wallet ownership
+    verify_wallet_ownership(wallet_address, authenticated_wallet)
+    
     ph = db.placeholder()
     
     try:
@@ -883,8 +985,14 @@ def get_nansen_balance(wallet_address: str):
         }
 
 @app.post("/api/swipe")
-async def swipe(swipe_action: SwipeAction):
-    """Record a swipe action"""
+async def swipe(
+    swipe_action: SwipeAction,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Record a swipe action (AUTH PROTECTED)"""
+    # Verify wallet ownership
+    verify_wallet_ownership(swipe_action.user_wallet, authenticated_wallet)
+    
     ph = db.placeholder()
     
     with db.get_connection() as conn:
@@ -940,8 +1048,14 @@ async def swipe(swipe_action: SwipeAction):
     }
 
 @app.get("/api/matches/{wallet_address}")
-async def get_matches(wallet_address: str):
-    """Get all matches for a user"""
+async def get_matches(
+    wallet_address: str,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Get all matches for a user (AUTH PROTECTED)"""
+    # Verify wallet ownership
+    verify_wallet_ownership(wallet_address, authenticated_wallet)
+    
     ph = db.placeholder()
     query = f"""SELECT user1_wallet, user2_wallet, chat_room_id, created_at 
                  FROM matches 
@@ -973,17 +1087,45 @@ async def get_matches(wallet_address: str):
     return {"matches": matches}
 
 @app.get("/api/chat/{chat_room_id}/messages")
-async def get_messages(chat_room_id: str, limit: int = 50):
-    """Get messages for a chat room"""
+async def get_messages(
+    chat_room_id: str, 
+    limit: int = 50,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Get messages for a chat room (AUTH PROTECTED - must be part of match)"""
     ph = db.placeholder()
-    query = f"""SELECT sender_wallet, message, created_at 
-                 FROM messages 
-                 WHERE chat_room_id = {ph} 
-                 ORDER BY created_at DESC 
-                 LIMIT {limit}"""
     
     with db.get_connection() as conn:
         cursor = db.get_cursor(conn)
+        
+        # Verify caller is part of this match (CRITICAL SECURITY CHECK)
+        if REQUIRE_AUTH and authenticated_wallet:
+            check_query = f"""
+                SELECT 1 FROM matches 
+                WHERE chat_room_id = {ph}
+                AND (user1_wallet = {ph} OR user2_wallet = {ph})
+            """
+            cursor.execute(check_query, (
+                chat_room_id,
+                authenticated_wallet,
+                authenticated_wallet
+            ))
+            
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=403,
+                    detail="You are not authorized to view this chat"
+                )
+        elif REQUIRE_AUTH:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        # Get messages
+        query = f"""SELECT sender_wallet, message, created_at 
+                     FROM messages 
+                     WHERE chat_room_id = {ph} 
+                     ORDER BY created_at DESC 
+                     LIMIT {limit}"""
+        
         cursor.execute(query, (chat_room_id,))
         results = cursor.fetchall()
     
@@ -1005,15 +1147,44 @@ async def get_messages(chat_room_id: str, limit: int = 50):
     return {"messages": list(reversed(messages))}
 
 @app.post("/api/chat/message")
-async def send_message(message_data: MessageCreate):
-    """Send a message to a chat room"""
+async def send_message(
+    message_data: MessageCreate,
+    authenticated_wallet: Optional[str] = Depends(get_authenticated_wallet)
+):
+    """Send a message to a chat room (AUTH PROTECTED - must be part of match)"""
     ph = db.placeholder()
+    
+    # Verify sender owns the wallet
+    verify_wallet_ownership(message_data.sender_wallet, authenticated_wallet)
+    
     message_id = str(uuid.uuid4())
     created_at = datetime.now().isoformat()
     
     with db.get_connection() as conn:
         cursor = db.get_cursor(conn)
         
+        # Verify sender is part of this match (CRITICAL SECURITY CHECK)
+        if REQUIRE_AUTH and authenticated_wallet:
+            check_query = f"""
+                SELECT 1 FROM matches 
+                WHERE chat_room_id = {ph}
+                AND (user1_wallet = {ph} OR user2_wallet = {ph})
+            """
+            cursor.execute(check_query, (
+                message_data.chat_room_id,
+                authenticated_wallet,
+                authenticated_wallet
+            ))
+            
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=403,
+                    detail="You are not authorized to send messages to this chat"
+                )
+        elif REQUIRE_AUTH:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        # Save message
         query = f"""INSERT INTO messages (id, chat_room_id, sender_wallet, message, created_at) 
                      VALUES ({ph}, {ph}, {ph}, {ph}, {ph})"""
         cursor.execute(query,
