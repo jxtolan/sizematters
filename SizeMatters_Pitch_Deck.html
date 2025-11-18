@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SizeMatters - Pitch Deck</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        
+        .slide {
+            width: 210mm;
+            height: 297mm;
+            padding: 60px;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cover-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .logo-placeholder {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 40px;
+            margin: 0 auto 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4);
+        }
+        
+        .logo-text {
+            font-size: 80px;
+            color: white;
+        }
+        
+        h1 {
+            font-size: 72px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tagline {
+            font-size: 32px;
+            color: #a5f3fc;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: #94a3b8;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        h2 {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: #10b981;
+            font-weight: 700;
+        }
+        
+        h3 {
+            font-size: 28px;
+            margin: 25px 0 15px;
+            color: #22d3ee;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+            line-height: 1.8;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        li {
+            font-size: 18px;
+            margin-bottom: 12px;
+            padding-left: 35px;
+            position: relative;
+            color: #e2e8f0;
+        }
+        
+        li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        
+        .quote {
+            border-left: 5px solid #10b981;
+            padding: 15px 25px;
+            margin: 20px 0;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 10px;
+            font-style: italic;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #10b981;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+        
+        strong {
+            color: #10b981;
+            font-weight: 700;
+        }
+        
+        .emoji {
+            font-size: 32px;
+            margin-right: 10px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .slide {
+                margin: 0;
+                border: none;
+            }
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .bullet-list li {
+            margin-bottom: 18px;
+            line-height: 1.6;
+        }
+        
+        .vision-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(34, 211, 238, 0.2) 100%);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 30px 0;
+            border: 2px solid #10b981;
+        }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide cover-slide">
+    <div class="content">
+        <div class="logo-placeholder">
+            <span class="logo-text">📈</span>
+        </div>
+        <h1>SizeMatters</h1>
+        <p class="tagline">Don't let the big ones scare you</p>
+        <p class="subtitle">Connecting Solana Traders of Every Level Based on Onchain Performance</p>
+    </div>
+</div>
+
+<!-- SLIDE 2: TEAM -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">👥</span>
+            <h2>Team Background & Experience</h2>
+        </div>
+        
+        <h3>Our Background</h3>
+        <p>We're builders at the intersection of crypto trading, social products, and real-time data systems.</p>
+        
+        <h3>Relevant Experience</h3>
+        <ul class="bullet-list">
+            <li><strong>Our Values:</strong> We get shit done. We push to prod. We are the future of AI builders</li>
+            <li><strong>Deep Crypto Native:</strong> Active Solana traders with firsthand experience navigating the ecosystem's opportunities and pain points</li>
+            <li><strong>Product Velocity:</strong> Shipped full-featured social network with real-time WebSocket chat, Nansen API integration, and wallet authentication in a few days</li>
+            <li><strong>Data Integration Expertise:</strong> Successfully integrated Nansen's institutional-grade analytics API with consumer-friendly UX</li>
+            <li><strong>Growth Mindset:</strong> Validated product-market fit through hackathon participation and direct user feedback</li>
+        </ul>
+        
+        <div class="highlight">
+            <strong>Why We're Uniquely Positioned:</strong> We ARE the target user. We understand elite trader psychology, we've experienced the isolation of solo trading at scale, and we ship fast.
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: WHY WE STARTED -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">🎯</span>
+            <h2>Why We Started Building</h2>
+        </div>
+        
+        <h3>The Problem We Lived</h3>
+        <p>As successful Solana traders, we faced a paradox: <strong>the better we got, the lonelier it became.</strong></p>
+        
+        <h3>Pain Points</h3>
+        <ul class="bullet-list">
+            <li>No way to verify who's actually making money vs. who's LARPing</li>
+            <li>Crypto Twitter is 90% noise, 10% signal</li>
+            <li>Can't find peers at similar skill/capital levels</li>
+            <li>Alpha gets diluted in public Discord/Telegram groups</li>
+            <li>Traditional networking lacks trust - everyone's anon with no proof</li>
+        </ul>
+        
+        <div class="highlight">
+            <h3>The Insight</h3>
+            <p>Dating apps solved discovery for relationships. Why not apply the same UX to professional networking for traders? Swipe through VERIFIED profiles, match with proven performers, share alpha privately.</p>
+            <p><strong>Your wallet doesn't lie. Onchain data solves the trust problem.</strong></p>
+        </div>
+        
+        <p style="margin-top: 30px; font-size: 22px; color: #10b981;"><strong>SizeMatters was born from necessity - we built the platform we wished existed.</strong></p>
+    </div>
+</div>
+
+<!-- SLIDE 4: MARKET SIZE -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">📊</span>
+            <h2>Market Size & Opportunity</h2>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number">2.8M</div>
+                <div class="stat-label">Monthly Active Solana Wallets</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">100K</div>
+                <div class="stat-label">Power Users (>$10K Portfolio)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">28K</div>
+                <div class="stat-label">Year 1 Target (Top 1%)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">10M+</div>
+                <div class="stat-label">Crypto Twitter Active Users</div>
+            </div>
+        </div>
+        
+        <h3>Serviceable Obtainable Market (Year 1)</h3>
+        <ul class="bullet-list">
+            <li><strong>10,000 verified users</strong> (0.36% of active Solana wallets)</li>
+            <li>Each user represents <strong>$50K-$10M in tradeable capital</strong></li>
+            <li>Conservative assumption: 1% of power users adopt</li>
+        </ul>
+        
+        <h3>Comparable Markets</h3>
+        <ul class="bullet-list">
+            <li>LinkedIn: 930M users, $15B revenue (networking)</li>
+            <li>Bloomberg Terminal: 325K users, $10B revenue (financial data)</li>
+            <li>Tinder: 75M users, $1.8B revenue (discovery/matching)</li>
+        </ul>
+        
+        <div class="highlight">
+            <strong>Our Unique Position:</strong> First verified social platform for crypto traders. Only platform combining dating app UX + Bloomberg-level data.
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: USER VALIDATION -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">✅</span>
+            <h2>User Feedback & Validation</h2>
+        </div>
+        
+        <h3>Early Traction</h3>
+        <ul class="bullet-list">
+            <li>Launched at <strong>Colosseum Hackathon</strong> (Solana ecosystem)</li>
+            <li>Positive reception from judges and participants</li>
+            <li>Featured as innovative use of onchain identity</li>
+        </ul>
+        
+        <h3>Real User Quotes</h3>
+        <div class="quote">
+            "Finally, a way to find other traders who actually know what they're doing. No more CT LARPers."<br>
+            <strong>— Trader #001 (Demo User)</strong>
+        </div>
+        <div class="quote">
+            "The fact that I can see someone's real P&L before connecting is a game-changer for trust."<br>
+            <strong>— Alpha Tester, $2.3M portfolio</strong>
+        </div>
+        <div class="quote">
+            "It's like LinkedIn but everyone's verified and it's actually fun to use."<br>
+            <strong>— Early Adopter</strong>
+        </div>
+        
+        <h3>Product Metrics (Pre-Launch)</h3>
+        <ul class="bullet-list">
+            <li>9 demo traders pre-seeded with real Solana whale addresses</li>
+            <li>100% wallet-verified users (impossible to fake)</li>
+            <li>Real-time Nansen data with 5-minute caching</li>
+            <li>WebSocket chat with <100ms latency</li>
+        </ul>
+        
+        <div class="highlight">
+            <strong>Ecosystem Interest:</strong> Preliminary conversations with Jupiter, Raydium, and Drift for $50K-$100K sponsored trading competitions
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 6: LONG-TERM VISION -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">🚀</span>
+            <h2>Long-Term Vision</h2>
+        </div>
+        
+        <div class="vision-box">
+            <h3>Year 1: Dominate Solana</h3>
+            <ul class="bullet-list">
+                <li>10,000 verified elite traders</li>
+                <li>#1 social platform for Solana power users</li>
+                <li>3-5 revenue streams active</li>
+                <li><strong>$1M ARR</strong></li>
+            </ul>
+        </div>
+        
+        <div class="vision-box">
+            <h3>Year 2: Multi-Chain Expansion</h3>
+            <ul class="bullet-list">
+                <li>Ethereum, Base, Arbitrum integration</li>
+                <li>100,000 users across chains</li>
+                <li>Institutional data products launched</li>
+                <li><strong>$10M ARR</strong></li>
+            </ul>
+        </div>
+        
+        <div class="vision-box">
+            <h3>Year 3: The Bloomberg Terminal for Onchain Social</h3>
+            <ul class="bullet-list">
+                <li>500,000+ verified traders globally</li>
+                <li>API for funds, institutions, protocols</li>
+                <li>Real-time sentiment engine</li>
+                <li><strong>$50M ARR</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: ULTIMATE VISION -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">💎</span>
+            <h2>The Ultimate Vision</h2>
+        </div>
+        
+        <div class="highlight" style="text-align: center; padding: 40px;">
+            <h3 style="font-size: 36px; margin-bottom: 20px;">SizeMatters becomes the verified identity layer for all of crypto</h3>
+        </div>
+        
+        <h3>Just Like:</h3>
+        <ul class="bullet-list" style="font-size: 22px;">
+            <li><strong>LinkedIn</strong> = Professional identity</li>
+            <li><strong>Twitter</strong> = Social identity</li>
+            <li><strong>GitHub</strong> = Developer identity</li>
+            <li><strong style="color: #10b981; font-size: 28px;">SizeMatters = Onchain trader identity</strong></li>
+        </ul>
+        
+        <h3>What This Unlocks:</h3>
+        <ul class="bullet-list">
+            <li><strong>Trust Layer:</strong> Your SizeMatters profile becomes your crypto reputation</li>
+            <li><strong>Distribution:</strong> Protocols launch products through SizeMatters first</li>
+            <li><strong>Intelligence:</strong> Real-time aggregate data on elite trader behavior</li>
+            <li><strong>Community:</strong> The exclusive network for proven performers</li>
+            <li><strong>Monetization:</strong> Subscriptions, advertising, data, competitions, M&A</li>
+        </ul>
+        
+        <div class="highlight" style="margin-top: 30px;">
+            <h3>The Network Effect</h3>
+            <p>Every verified user increases platform value exponentially. More matches = more alpha shared. More data = stronger moat. More revenue = faster growth.</p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 8: REVENUE MODEL -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">💰</span>
+            <h2>Revenue Pathways</h2>
+        </div>
+        
+        <div class="stat-box" style="margin-bottom: 20px;">
+            <h3>1. Trading Competitions (DEX Sponsored)</h3>
+            <p>Monthly competitions funded by Jupiter, Raydium, Drift with $50K-$500K prize pools</p>
+            <div class="stat-number">$120K-$1.2M</div>
+            <div class="stat-label">Annual Revenue Potential</div>
+        </div>
+        
+        <div class="stat-box" style="margin-bottom: 20px;">
+            <h3>2. Onchain Protocol Messaging</h3>
+            <p>Targeted messages to user segments (e.g., "Top 100 BONK holders") at $2K-$5K per message</p>
+            <div class="stat-number">$240K-$1.2M</div>
+            <div class="stat-label">Annual Revenue Potential</div>
+        </div>
+        
+        <div class="stat-box" style="margin-bottom: 20px;">
+            <h3>3. User Acquisition Campaigns</h3>
+            <p>New protocols poach competitors' users via SizeMatters at $50-$500 per converted user</p>
+            <div class="stat-number">$200K-$1M</div>
+            <div class="stat-label">Annual Revenue Potential</div>
+        </div>
+        
+        <div class="stat-box">
+            <h3>4. Premium Memberships</h3>
+            <p>$99/month for unlimited swipes, advanced filters, SuperLikes, incognito mode</p>
+            <div class="stat-number">$600K+</div>
+            <div class="stat-label">Annual Revenue Potential (5% conversion)</div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 9: WHY WE'LL WIN -->
+<div class="slide">
+    <div class="content">
+        <div class="section-header">
+            <span class="emoji">🏆</span>
+            <h2>Why We'll Win</h2>
+        </div>
+        
+        <ul class="bullet-list" style="font-size: 22px;">
+            <li><strong>First-Mover Advantage:</strong> No direct competitor in verified trader social</li>
+            <li><strong>Data Moat:</strong> Nansen partnership creates barrier to entry</li>
+            <li><strong>Network Effects:</strong> Value increases exponentially with each quality user</li>
+            <li><strong>UX Innovation:</strong> Dating app mechanics in crypto (proven addictive)</li>
+            <li><strong>Solana Native:</strong> Fastest blockchain, best UX, growing ecosystem</li>
+            <li><strong>Execution Speed:</strong> We ship fast, we ship right</li>
+        </ul>
+        
+        <div class="highlight" style="margin-top: 40px;">
+            <h3>Potential Acquirers</h3>
+            <ul class="bullet-list">
+                <li><strong>Nansen</strong> ($1B+ valuation) - we're their social layer</li>
+                <li><strong>Coinbase</strong> - retail trading social features</li>
+                <li><strong>Bloomberg</strong> - crypto terminal integration</li>
+                <li><strong>Solana Foundation</strong> - ecosystem flagship app</li>
+            </ul>
+        </div>
+        
+        <div class="vision-box" style="text-align: center; margin-top: 40px;">
+            <h3 style="font-size: 32px;">Crypto is lonely. We're building the antidote.</h3>
+            <p style="font-size: 24px; margin-top: 20px;"><strong>SizeMatters isn't just an app - it's a movement.</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 10: CLOSING -->
+<div class="slide cover-slide">
+    <div class="content">
+        <div class="logo-placeholder">
+            <span class="logo-text">📈</span>
+        </div>
+        <h1 style="font-size: 64px;">Let's Build the Future</h1>
+        <p class="tagline" style="font-size: 28px;">Where Elite Traders Connect</p>
+        
+        <div class="stats-grid" style="margin-top: 60px;">
+            <div class="stat-box">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Verified Users</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">6 Weeks</div>
+                <div class="stat-label">Idea to Production</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">5 Streams</div>
+                <div class="stat-label">Revenue Pathways</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$50M</div>
+                <div class="stat-label">Year 3 ARR Target</div>
+            </div>
+        </div>
+        
+        <p style="margin-top: 60px; font-size: 24px; color: #10b981;"><strong>SizeMatters</strong></p>
+        <p style="font-size: 18px; color: #94a3b8;">Because in crypto, size really does matter. 💎</p>
+    </div>
+</div>
+
+</body>
+</html>
+
+

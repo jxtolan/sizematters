@@ -5,11 +5,11 @@ from typing import List, Optional, Dict
 import json
 import requests
 from datetime import datetime, timedelta
-import sqlite3
 import uuid
 from collections import defaultdict
 import os
 import time
+from database import db
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -23,53 +23,7 @@ app.add_middleware(
 )
 
 # Database setup
-def init_db():
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    # Users table with extended profile fields
-    c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (id TEXT PRIMARY KEY,
-                  wallet_address TEXT UNIQUE NOT NULL,
-                  trader_number INTEGER UNIQUE,
-                  bio TEXT NOT NULL,
-                  country TEXT NOT NULL,
-                  favourite_ct_account TEXT NOT NULL,
-                  worst_ct_account TEXT,
-                  favourite_trading_venue TEXT NOT NULL,
-                  asset_choice_6m TEXT NOT NULL,
-                  twitter_account TEXT,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    # Swipes table
-    c.execute('''CREATE TABLE IF NOT EXISTS swipes
-                 (id TEXT PRIMARY KEY,
-                  user_id TEXT NOT NULL,
-                  target_wallet TEXT NOT NULL,
-                  direction TEXT NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (user_id) REFERENCES users(id))''')
-    
-    # Matches table
-    c.execute('''CREATE TABLE IF NOT EXISTS matches
-                 (id TEXT PRIMARY KEY,
-                  user1_wallet TEXT NOT NULL,
-                  user2_wallet TEXT NOT NULL,
-                  chat_room_id TEXT NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    # Messages table
-    c.execute('''CREATE TABLE IF NOT EXISTS messages
-                 (id TEXT PRIMARY KEY,
-                  chat_room_id TEXT NOT NULL,
-                  sender_wallet TEXT NOT NULL,
-                  message TEXT NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    
-    conn.commit()
-    conn.close()
-
-init_db()
+db.init_db()
 
 # In-memory cache for Nansen API responses
 # Structure: { wallet_address: { 'pnl': {...}, 'balance': {...}, 'timestamp': 123456 } }
@@ -219,61 +173,65 @@ DEMO_TRADERS_DATA = [
 # Auto-seed demo traders on startup if database is empty
 def run_migrations():
     """Run database migrations automatically on startup"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    try:
-        print("🔄 Checking database migrations...")
-        
-        # Check if twitter_account column exists
-        c.execute("PRAGMA table_info(users)")
-        columns = [row[1] for row in c.fetchall()]
-        
-        if 'twitter_account' not in columns:
-            print("   📝 Adding twitter_account column...")
-            c.execute("ALTER TABLE users ADD COLUMN twitter_account TEXT")
-            conn.commit()
-            print("   ✅ twitter_account column added!")
-        else:
-            print("   ✅ All migrations up to date")
-        
-        conn.close()
-    except Exception as e:
-        print(f"   ⚠️  Migration error: {e}")
-        conn.close()
+    with db.get_connection() as conn:
+        try:
+            print("🔄 Checking database migrations...")
+            cursor = conn.cursor()
+            
+            # Check if twitter_account column exists
+            if db.use_postgres:
+                cursor.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='users'
+                """)
+                columns = [row[0] for row in cursor.fetchall()]
+            else:
+                cursor.execute("PRAGMA table_info(users)")
+                columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'twitter_account' not in columns:
+                print("   📝 Adding twitter_account column...")
+                cursor.execute("ALTER TABLE users ADD COLUMN twitter_account TEXT")
+                conn.commit()
+                print("   ✅ twitter_account column added!")
+            else:
+                print("   ✅ All migrations up to date")
+        except Exception as e:
+            print(f"   ⚠️  Migration error: {e}")
 
 def auto_seed_demo_traders():
     """Automatically seed demo traders with FULL profiles on startup if database has no users"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    # Check if we have any users
-    c.execute("SELECT COUNT(*) FROM users")
-    user_count = c.fetchone()[0]
-    
-    if user_count == 0:
-        print("🌱 Database is empty! Auto-seeding demo traders with full profiles...")
-        for idx, trader in enumerate(DEMO_TRADERS_DATA, start=1):
-            try:
-                user_id = str(uuid.uuid4())
-                c.execute("""INSERT INTO users 
-                            (id, wallet_address, trader_number, bio, country, favourite_ct_account,
-                             worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                         (user_id, trader["address"], idx, trader["bio"], trader["country"],
-                          trader["favourite_ct_account"], None,  # worst_ct_account is optional
-                          trader["favourite_trading_venue"], trader["asset_choice_6m"],
-                          None, datetime.now().isoformat()))  # twitter_account is optional
-                print(f"   ✅ Added Trader #{idx:03d}: {trader['address'][:8]}... ({trader['country']})")
-            except Exception as e:
-                print(f"   ⚠️  Skipped {trader['address'][:8]}...: {str(e)}")
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
         
-        conn.commit()
-        print(f"🎉 Auto-seed complete! Added {len(DEMO_TRADERS_DATA)} demo traders with full profiles")
-    else:
-        print(f"✅ Database already has {user_count} users. Skipping auto-seed.")
-    
-    conn.close()
+        # Check if we have any users
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0] if not db.use_postgres else cursor.fetchone()['count']
+        
+        if user_count == 0:
+            print("🌱 Database is empty! Auto-seeding demo traders with full profiles...")
+            ph = db.placeholder()
+            for idx, trader in enumerate(DEMO_TRADERS_DATA, start=1):
+                try:
+                    user_id = str(uuid.uuid4())
+                    query = f"""INSERT INTO users 
+                                (id, wallet_address, trader_number, bio, country, favourite_ct_account,
+                                 worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account, created_at)
+                                VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})"""
+                    cursor.execute(query,
+                             (user_id, trader["address"], idx, trader["bio"], trader["country"],
+                              trader["favourite_ct_account"], None,  # worst_ct_account is optional
+                              trader["favourite_trading_venue"], trader["asset_choice_6m"],
+                              None, datetime.now().isoformat()))  # twitter_account is optional
+                    print(f"   ✅ Added Trader #{idx:03d}: {trader['address'][:8]}... ({trader['country']})")
+                except Exception as e:
+                    print(f"   ⚠️  Skipped {trader['address'][:8]}...: {str(e)}")
+            
+            conn.commit()
+            print(f"🎉 Auto-seed complete! Added {len(DEMO_TRADERS_DATA)} demo traders with full profiles")
+        else:
+            print(f"✅ Database already has {user_count} users. Skipping auto-seed.")
 
 # Run migrations and auto-seed on startup
 run_migrations()
@@ -332,11 +290,11 @@ DEMO_TRADERS = [trader["address"] for trader in DEMO_TRADERS_DATA]
 # Get all registered trader wallets from database
 def get_all_trader_wallets():
     """Get all trader wallet addresses from the database (REAL USERS FIRST, then demos if DB is empty)"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    c.execute("SELECT wallet_address FROM users ORDER BY created_at DESC")
-    all_wallets = [row[0] for row in c.fetchall()]
-    conn.close()
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute("SELECT wallet_address FROM users ORDER BY created_at DESC")
+        results = cursor.fetchall()
+        all_wallets = [row['wallet_address'] if isinstance(row, dict) else row[0] for row in results]
     
     # If database is empty or has only 1 user, add demo traders as fallback
     if len(all_wallets) <= 1:
@@ -356,13 +314,16 @@ def get_all_trader_wallets():
 # Helper function to get next trader number
 def get_next_trader_number():
     """Get the next available trader number"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    c.execute("SELECT MAX(trader_number) FROM users")
-    result = c.fetchone()
-    conn.close()
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute("SELECT MAX(trader_number) FROM users")
+        result = cursor.fetchone()
     
-    max_number = result[0] if result[0] is not None else 0
+    if result:
+        max_number = result['max'] if isinstance(result, dict) and 'max' in result else result[0]
+        max_number = max_number if max_number is not None else 0
+    else:
+        max_number = 0
     return max_number + 1
 
 def format_trader_number(number):
@@ -389,32 +350,46 @@ async def set_nansen_config(config: NansenConfig):
 @app.post("/api/users")
 async def check_user(user: UserCreate):
     """Check if user exists and return their profile status"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    # Check if user exists
-    c.execute("""SELECT id, trader_number, bio, country, favourite_ct_account, 
+    ph = db.placeholder()
+    query = f"""SELECT id, trader_number, bio, country, favourite_ct_account, 
                  worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
-                 FROM users WHERE wallet_address = ?""", (user.wallet_address,))
-    existing_user = c.fetchone()
-    conn.close()
+                 FROM users WHERE wallet_address = {ph}"""
+    
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute(query, (user.wallet_address,))
+        existing_user = cursor.fetchone()
     
     if existing_user:
+        # Convert to dict if needed
+        if isinstance(existing_user, dict):
+            user_dict = existing_user
+        else:
+            user_dict = {
+                'id': existing_user[0],
+                'trader_number': existing_user[1],
+                'bio': existing_user[2],
+                'country': existing_user[3],
+                'favourite_ct_account': existing_user[4],
+                'worst_ct_account': existing_user[5],
+                'favourite_trading_venue': existing_user[6],
+                'asset_choice_6m': existing_user[7],
+                'twitter_account': existing_user[8]
+            }
+        
         # User exists, check if profile is complete (worst_ct_account and twitter_account are optional)
         profile_complete = all([
-            existing_user[2],  # bio
-            existing_user[3],  # country
-            existing_user[4],  # favourite_ct_account
-            # existing_user[5] is worst_ct_account - OPTIONAL
-            existing_user[6],  # favourite_trading_venue
-            existing_user[7]   # asset_choice_6m
-            # existing_user[8] is twitter_account - OPTIONAL
+            user_dict['bio'],
+            user_dict['country'],
+            user_dict['favourite_ct_account'],
+            user_dict['favourite_trading_venue'],
+            user_dict['asset_choice_6m']
         ])
         
         return {
-            "user_id": existing_user[0],
-            "trader_number": existing_user[1],
-            "trader_number_formatted": format_trader_number(existing_user[1]) if existing_user[1] else None,
+            "user_id": user_dict['id'],
+            "trader_number": user_dict['trader_number'],
+            "trader_number_formatted": format_trader_number(user_dict['trader_number']) if user_dict['trader_number'] else None,
             "wallet_address": user.wallet_address,
             "exists": True,
             "profile_complete": profile_complete
@@ -431,42 +406,51 @@ async def check_user(user: UserCreate):
 @app.post("/api/users/{wallet_address}/complete-profile")
 async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
     """Complete user profile with all required fields"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
+    ph = db.placeholder()
     
     try:
-        # Check if user already exists
-        c.execute("SELECT id, trader_number FROM users WHERE wallet_address = ?", (wallet_address,))
-        existing_user = c.fetchone()
-        
-        if existing_user:
-            # Update existing user
-            c.execute("""UPDATE users 
-                        SET bio = ?, country = ?, favourite_ct_account = ?, 
-                            worst_ct_account = ?, favourite_trading_venue = ?, 
-                            asset_choice_6m = ?, twitter_account = ?
-                        WHERE wallet_address = ?""",
-                     (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
-                      profile_data.worst_ct_account, profile_data.favourite_trading_venue,
-                      profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
-            user_id = existing_user[0]
-            trader_number = existing_user[1]
-        else:
-            # Create new user with trader number
-            user_id = str(uuid.uuid4())
-            trader_number = get_next_trader_number()
+        with db.get_connection() as conn:
+            cursor = db.get_cursor(conn)
             
-            c.execute("""INSERT INTO users 
-                        (id, wallet_address, trader_number, bio, country, favourite_ct_account,
-                         worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                     (user_id, wallet_address, trader_number, profile_data.bio, 
-                      profile_data.country, profile_data.favourite_ct_account,
-                      profile_data.worst_ct_account, profile_data.favourite_trading_venue,
-                      profile_data.asset_choice_6m, profile_data.twitter_account))
-        
-        conn.commit()
-        conn.close()
+            # Check if user already exists
+            cursor.execute(f"SELECT id, trader_number FROM users WHERE wallet_address = {ph}", (wallet_address,))
+            existing_user = cursor.fetchone()
+            
+            if existing_user:
+                # Convert to dict if needed
+                if isinstance(existing_user, dict):
+                    user_id = existing_user['id']
+                    trader_number = existing_user['trader_number']
+                else:
+                    user_id = existing_user[0]
+                    trader_number = existing_user[1]
+                
+                # Update existing user
+                update_query = f"""UPDATE users 
+                            SET bio = {ph}, country = {ph}, favourite_ct_account = {ph}, 
+                                worst_ct_account = {ph}, favourite_trading_venue = {ph}, 
+                                asset_choice_6m = {ph}, twitter_account = {ph}
+                            WHERE wallet_address = {ph}"""
+                cursor.execute(update_query,
+                         (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
+                          profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                          profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
+            else:
+                # Create new user with trader number
+                user_id = str(uuid.uuid4())
+                trader_number = get_next_trader_number()
+                
+                insert_query = f"""INSERT INTO users 
+                            (id, wallet_address, trader_number, bio, country, favourite_ct_account,
+                             worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account)
+                            VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})"""
+                cursor.execute(insert_query,
+                         (user_id, wallet_address, trader_number, profile_data.bio, 
+                          profile_data.country, profile_data.favourite_ct_account,
+                          profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                          profile_data.asset_choice_6m, profile_data.twitter_account))
+            
+            conn.commit()
         
         return {
             "status": "success",
@@ -476,64 +460,81 @@ async def complete_profile(wallet_address: str, profile_data: ProfileComplete):
             "message": "Profile completed successfully"
         }
     except Exception as e:
-        conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to complete profile: {str(e)}")
 
 @app.get("/api/users/{wallet_address}/profile")
 async def get_my_profile(wallet_address: str):
     """Get user's own complete profile for editing"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    c.execute("""SELECT trader_number, bio, country, favourite_ct_account, 
+    ph = db.placeholder()
+    query = f"""SELECT trader_number, bio, country, favourite_ct_account, 
                  worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
-                 FROM users WHERE wallet_address = ?""", (wallet_address,))
-    user = c.fetchone()
-    conn.close()
+                 FROM users WHERE wallet_address = {ph}"""
+    
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute(query, (wallet_address,))
+        user = cursor.fetchone()
     
     if not user:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    return {
-        "wallet_address": wallet_address,
-        "trader_number": user[0],
-        "trader_number_formatted": format_trader_number(user[0]) if user[0] else None,
-        "bio": user[1],
-        "country": user[2],
-        "favourite_ct_account": user[3],
-        "worst_ct_account": user[4],
-        "favourite_trading_venue": user[5],
-        "asset_choice_6m": user[6],
-        "twitter_account": user[7]
-    }
+    # Convert to dict if needed
+    if isinstance(user, dict):
+        return {
+            "wallet_address": wallet_address,
+            "trader_number": user['trader_number'],
+            "trader_number_formatted": format_trader_number(user['trader_number']) if user['trader_number'] else None,
+            "bio": user['bio'],
+            "country": user['country'],
+            "favourite_ct_account": user['favourite_ct_account'],
+            "worst_ct_account": user['worst_ct_account'],
+            "favourite_trading_venue": user['favourite_trading_venue'],
+            "asset_choice_6m": user['asset_choice_6m'],
+            "twitter_account": user['twitter_account']
+        }
+    else:
+        return {
+            "wallet_address": wallet_address,
+            "trader_number": user[0],
+            "trader_number_formatted": format_trader_number(user[0]) if user[0] else None,
+            "bio": user[1],
+            "country": user[2],
+            "favourite_ct_account": user[3],
+            "worst_ct_account": user[4],
+            "favourite_trading_venue": user[5],
+            "asset_choice_6m": user[6],
+            "twitter_account": user[7]
+        }
 
 @app.put("/api/users/{wallet_address}/profile")
 async def update_my_profile(wallet_address: str, profile_data: ProfileComplete):
     """Update user's own profile"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
+    ph = db.placeholder()
     
     try:
-        # Update user profile
-        c.execute("""UPDATE users 
-                    SET bio = ?, country = ?, favourite_ct_account = ?, 
-                        worst_ct_account = ?, favourite_trading_venue = ?, 
-                        asset_choice_6m = ?, twitter_account = ?
-                    WHERE wallet_address = ?""",
-                 (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
-                  profile_data.worst_ct_account, profile_data.favourite_trading_venue,
-                  profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
-        
-        if c.rowcount == 0:
-            conn.close()
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        conn.commit()
-        conn.close()
+        with db.get_connection() as conn:
+            cursor = db.get_cursor(conn)
+            
+            # Update user profile
+            query = f"""UPDATE users 
+                        SET bio = {ph}, country = {ph}, favourite_ct_account = {ph}, 
+                            worst_ct_account = {ph}, favourite_trading_venue = {ph}, 
+                            asset_choice_6m = {ph}, twitter_account = {ph}
+                        WHERE wallet_address = {ph}"""
+            cursor.execute(query,
+                     (profile_data.bio, profile_data.country, profile_data.favourite_ct_account,
+                      profile_data.worst_ct_account, profile_data.favourite_trading_venue,
+                      profile_data.asset_choice_6m, profile_data.twitter_account, wallet_address))
+            
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            conn.commit()
         
         return {"status": "success", "message": "Profile updated successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
-        conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
 @app.get("/api/profiles/{wallet_address}")
@@ -542,15 +543,17 @@ async def get_profiles(wallet_address: str):
     # Cleanup expired cache entries periodically
     clear_expired_cache()
     
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
+    ph = db.placeholder()
     
-    # Get user's already swiped wallets
-    c.execute("""SELECT target_wallet FROM swipes 
-                 WHERE user_id = (SELECT id FROM users WHERE wallet_address = ?)""", 
-              (wallet_address,))
-    swiped_wallets = [row[0] for row in c.fetchall()]
-    conn.close()
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        
+        # Get user's already swiped wallets
+        query = f"""SELECT target_wallet FROM swipes 
+                     WHERE user_id = (SELECT id FROM users WHERE wallet_address = {ph})"""
+        cursor.execute(query, (wallet_address,))
+        results = cursor.fetchall()
+        swiped_wallets = [row['target_wallet'] if isinstance(row, dict) else row[0] for row in results]
     
     # Get all available trader wallets from database
     all_wallets = get_all_trader_wallets()
@@ -586,28 +589,44 @@ async def get_profiles(wallet_address: str):
                 continue
         
         # Get profile data from database
-        conn = sqlite3.connect('smartmoney.db')
-        c = conn.cursor()
-        c.execute("""SELECT trader_number, bio, country, favourite_ct_account, 
-                     worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
-                     FROM users WHERE wallet_address = ?""", (wallet,))
-        profile_result = c.fetchone()
-        conn.close()
+        with db.get_connection() as conn2:
+            cursor2 = db.get_cursor(conn2)
+            query2 = f"""SELECT trader_number, bio, country, favourite_ct_account, 
+                         worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
+                         FROM users WHERE wallet_address = {ph}"""
+            cursor2.execute(query2, (wallet,))
+            profile_result = cursor2.fetchone()
         
         if profile_result:
-            trader_number = profile_result[0]
-            trader_display = format_trader_number(trader_number) if trader_number else "Demo"
-            profile_data = {
-                "trader_number": trader_number,
-                "trader_number_formatted": trader_display,
-                "bio": profile_result[1],
-                "country": profile_result[2],
-                "favourite_ct_account": profile_result[3],
-                "worst_ct_account": profile_result[4],
-                "favourite_trading_venue": profile_result[5],
-                "asset_choice_6m": profile_result[6],
-                "twitter_account": profile_result[7]
-            }
+            # Convert to dict if needed
+            if isinstance(profile_result, dict):
+                trader_number = profile_result['trader_number']
+                trader_display = format_trader_number(trader_number) if trader_number else "Demo"
+                profile_data = {
+                    "trader_number": trader_number,
+                    "trader_number_formatted": trader_display,
+                    "bio": profile_result['bio'],
+                    "country": profile_result['country'],
+                    "favourite_ct_account": profile_result['favourite_ct_account'],
+                    "worst_ct_account": profile_result['worst_ct_account'],
+                    "favourite_trading_venue": profile_result['favourite_trading_venue'],
+                    "asset_choice_6m": profile_result['asset_choice_6m'],
+                    "twitter_account": profile_result['twitter_account']
+                }
+            else:
+                trader_number = profile_result[0]
+                trader_display = format_trader_number(trader_number) if trader_number else "Demo"
+                profile_data = {
+                    "trader_number": trader_number,
+                    "trader_number_formatted": trader_display,
+                    "bio": profile_result[1],
+                    "country": profile_result[2],
+                    "favourite_ct_account": profile_result[3],
+                    "worst_ct_account": profile_result[4],
+                    "favourite_trading_venue": profile_result[5],
+                    "asset_choice_6m": profile_result[6],
+                    "twitter_account": profile_result[7]
+                }
         else:
             # Demo profile
             profile_data = {
@@ -866,50 +885,53 @@ def get_nansen_balance(wallet_address: str):
 @app.post("/api/swipe")
 async def swipe(swipe_action: SwipeAction):
     """Record a swipe action"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
+    ph = db.placeholder()
     
-    # Get user ID
-    c.execute("SELECT id FROM users WHERE wallet_address = ?", (swipe_action.user_wallet,))
-    user = c.fetchone()
-    
-    if not user:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user_id = user[0]
-    
-    # Record swipe
-    swipe_id = str(uuid.uuid4())
-    c.execute("INSERT INTO swipes (id, user_id, target_wallet, direction) VALUES (?, ?, ?, ?)",
-              (swipe_id, user_id, swipe_action.target_wallet, swipe_action.direction))
-    
-    # Check for match if swiped right
-    match_created = False
-    chat_room_id = None
-    
-    if swipe_action.direction == "right":
-        # Check if target wallet also swiped right on this user
-        c.execute("""SELECT s.id FROM swipes s
-                     JOIN users u ON s.user_id = u.id
-                     WHERE u.wallet_address = ? 
-                     AND s.target_wallet = ? 
-                     AND s.direction = 'right'""",
-                  (swipe_action.target_wallet, swipe_action.user_wallet))
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
         
-        mutual_swipe = c.fetchone()
+        # Get user ID
+        cursor.execute(f"SELECT id FROM users WHERE wallet_address = {ph}", (swipe_action.user_wallet,))
+        user = cursor.fetchone()
         
-        if mutual_swipe:
-            # Create match
-            match_id = str(uuid.uuid4())
-            chat_room_id = str(uuid.uuid4())
-            c.execute("""INSERT INTO matches (id, user1_wallet, user2_wallet, chat_room_id) 
-                         VALUES (?, ?, ?, ?)""",
-                      (match_id, swipe_action.user_wallet, swipe_action.target_wallet, chat_room_id))
-            match_created = True
-    
-    conn.commit()
-    conn.close()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_id = user['id'] if isinstance(user, dict) else user[0]
+        
+        # Record swipe
+        swipe_id = str(uuid.uuid4())
+        insert_query = f"INSERT INTO swipes (id, user_id, target_wallet, direction) VALUES ({ph}, {ph}, {ph}, {ph})"
+        cursor.execute(insert_query,
+                  (swipe_id, user_id, swipe_action.target_wallet, swipe_action.direction))
+        
+        # Check for match if swiped right
+        match_created = False
+        chat_room_id = None
+        
+        if swipe_action.direction == "right":
+            # Check if target wallet also swiped right on this user
+            check_query = f"""SELECT s.id FROM swipes s
+                         JOIN users u ON s.user_id = u.id
+                         WHERE u.wallet_address = {ph} 
+                         AND s.target_wallet = {ph} 
+                         AND s.direction = 'right'"""
+            cursor.execute(check_query,
+                      (swipe_action.target_wallet, swipe_action.user_wallet))
+            
+            mutual_swipe = cursor.fetchone()
+            
+            if mutual_swipe:
+                # Create match
+                match_id = str(uuid.uuid4())
+                chat_room_id = str(uuid.uuid4())
+                match_query = f"""INSERT INTO matches (id, user1_wallet, user2_wallet, chat_room_id) 
+                             VALUES ({ph}, {ph}, {ph}, {ph})"""
+                cursor.execute(match_query,
+                          (match_id, swipe_action.user_wallet, swipe_action.target_wallet, chat_room_id))
+                match_created = True
+        
+        conn.commit()
     
     return {
         "status": "success",
@@ -920,67 +942,85 @@ async def swipe(swipe_action: SwipeAction):
 @app.get("/api/matches/{wallet_address}")
 async def get_matches(wallet_address: str):
     """Get all matches for a user"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    c.execute("""SELECT user1_wallet, user2_wallet, chat_room_id, created_at 
+    ph = db.placeholder()
+    query = f"""SELECT user1_wallet, user2_wallet, chat_room_id, created_at 
                  FROM matches 
-                 WHERE user1_wallet = ? OR user2_wallet = ?
-                 ORDER BY created_at DESC""",
-              (wallet_address, wallet_address))
+                 WHERE user1_wallet = {ph} OR user2_wallet = {ph}
+                 ORDER BY created_at DESC"""
+    
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute(query, (wallet_address, wallet_address))
+        results = cursor.fetchall()
     
     matches = []
-    for row in c.fetchall():
-        other_wallet = row[1] if row[0] == wallet_address else row[0]
-        matches.append({
-            "wallet_address": other_wallet,
-            "chat_room_id": row[2],
-            "created_at": row[3]
-        })
+    for row in results:
+        if isinstance(row, dict):
+            other_wallet = row['user2_wallet'] if row['user1_wallet'] == wallet_address else row['user1_wallet']
+            matches.append({
+                "wallet_address": other_wallet,
+                "chat_room_id": row['chat_room_id'],
+                "created_at": row['created_at']
+            })
+        else:
+            other_wallet = row[1] if row[0] == wallet_address else row[0]
+            matches.append({
+                "wallet_address": other_wallet,
+                "chat_room_id": row[2],
+                "created_at": row[3]
+            })
     
-    conn.close()
     return {"matches": matches}
 
 @app.get("/api/chat/{chat_room_id}/messages")
 async def get_messages(chat_room_id: str, limit: int = 50):
     """Get messages for a chat room"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
-    c.execute("""SELECT sender_wallet, message, created_at 
+    ph = db.placeholder()
+    query = f"""SELECT sender_wallet, message, created_at 
                  FROM messages 
-                 WHERE chat_room_id = ? 
+                 WHERE chat_room_id = {ph} 
                  ORDER BY created_at DESC 
-                 LIMIT ?""",
-              (chat_room_id, limit))
+                 LIMIT {limit}"""
+    
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        cursor.execute(query, (chat_room_id,))
+        results = cursor.fetchall()
     
     messages = []
-    for row in c.fetchall():
-        messages.append({
-            "sender_wallet": row[0],
-            "message": row[1],
-            "created_at": row[2]
-        })
+    for row in results:
+        if isinstance(row, dict):
+            messages.append({
+                "sender_wallet": row['sender_wallet'],
+                "message": row['message'],
+                "created_at": row['created_at']
+            })
+        else:
+            messages.append({
+                "sender_wallet": row[0],
+                "message": row[1],
+                "created_at": row[2]
+            })
     
-    conn.close()
     return {"messages": list(reversed(messages))}
 
 @app.post("/api/chat/message")
 async def send_message(message_data: MessageCreate):
     """Send a message to a chat room"""
-    conn = sqlite3.connect('smartmoney.db')
-    c = conn.cursor()
-    
+    ph = db.placeholder()
     message_id = str(uuid.uuid4())
     created_at = datetime.now().isoformat()
     
-    c.execute("""INSERT INTO messages (id, chat_room_id, sender_wallet, message, created_at) 
-                 VALUES (?, ?, ?, ?, ?)""",
-              (message_id, message_data.chat_room_id, message_data.sender_wallet, 
-               message_data.message, created_at))
-    
-    conn.commit()
-    conn.close()
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        
+        query = f"""INSERT INTO messages (id, chat_room_id, sender_wallet, message, created_at) 
+                     VALUES ({ph}, {ph}, {ph}, {ph}, {ph})"""
+        cursor.execute(query,
+                  (message_id, message_data.chat_room_id, message_data.sender_wallet, 
+                   message_data.message, created_at))
+        
+        conn.commit()
     
     # Broadcast message to WebSocket connections
     await manager.broadcast({
