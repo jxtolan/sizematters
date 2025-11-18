@@ -99,7 +99,11 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_BASE}/api/users/${walletAddress}/profile`)
+      const response = await axios.get(`${API_BASE}/api/users/${walletAddress}/profile`, {
+        headers: {
+          'X-Wallet-Address': walletAddress
+        }
+      })
       const profile = response.data
       
       setTraderNumber(profile.trader_number_formatted || '')
@@ -145,6 +149,10 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
         favourite_trading_venue: finalVenue,
         asset_choice_6m: assetChoice.trim(),
         twitter_account: twitterAccount.trim() || null
+      }, {
+        headers: {
+          'X-Wallet-Address': walletAddress
+        }
       })
       
       toast.success('Profile updated! 🎉')

@@ -131,6 +131,10 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
         favourite_trading_venue: finalVenue,
         asset_choice_6m: assetChoice.trim(),
         twitter_account: twitterAccount.trim() || null  // Optional field
+      }, {
+        headers: {
+          'X-Wallet-Address': walletAddress
+        }
       })
       
       toast.success('Profile completed! 🎉')

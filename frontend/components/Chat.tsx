@@ -91,7 +91,12 @@ export const Chat: React.FC<ChatProps> = ({
   const loadMessages = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE}/api/chat/${chatRoomId}/messages`
+        `${API_BASE}/api/chat/${chatRoomId}/messages`,
+        {
+          headers: {
+            'X-Wallet-Address': userWallet
+          }
+        }
       )
       setMessages(response.data.messages)
     } catch (error) {
@@ -111,6 +116,10 @@ export const Chat: React.FC<ChatProps> = ({
         chat_room_id: chatRoomId,
         sender_wallet: userWallet,
         message: messageText
+      }, {
+        headers: {
+          'X-Wallet-Address': userWallet
+        }
       })
       console.log('✅ Message sent successfully')
     } catch (error) {

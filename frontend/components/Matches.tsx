@@ -29,7 +29,11 @@ export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
   const loadMatches = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`${API_BASE}/api/matches/${walletAddress}`)
+      const response = await axios.get(`${API_BASE}/api/matches/${walletAddress}`, {
+        headers: {
+          'X-Wallet-Address': walletAddress
+        }
+      })
       setMatches(response.data.matches)
     } catch (error) {
       console.error('Error loading matches:', error)

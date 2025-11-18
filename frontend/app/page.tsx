@@ -100,6 +100,10 @@ export default function Home() {
         user_wallet: publicKey.toString(),
         target_wallet: profiles[currentProfileIndex].wallet_address,
         direction
+      }, {
+        headers: {
+          'X-Wallet-Address': publicKey.toString()
+        }
       })
 
       if (response.data.match_created) {
