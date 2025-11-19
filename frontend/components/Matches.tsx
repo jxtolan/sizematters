@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Chat } from './Chat'
 import { FiMessageCircle, FiUser } from 'react-icons/fi'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getAuthHeaders } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -18,6 +20,7 @@ interface MatchesProps {
 }
 
 export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
+  const wallet = useWallet()
   const [matches, setMatches] = useState<Match[]>([])
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,10 +32,9 @@ export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
   const loadMatches = async () => {
     setLoading(true)
     try {
+      const headers = await getAuthHeaders(wallet)
       const response = await axios.get(`${API_BASE}/api/matches/${walletAddress}`, {
-        headers: {
-          'X-Wallet-Address': walletAddress
-        }
+        headers
       })
       setMatches(response.data.matches)
     } catch (error) {

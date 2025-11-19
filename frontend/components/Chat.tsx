@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { FiArrowLeft, FiSend } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getAuthHeaders } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -40,6 +42,7 @@ export const Chat: React.FC<ChatProps> = ({
   otherWallet,
   onBack
 }) => {
+  const wallet = useWallet()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [ws, setWs] = useState<WebSocket | null>(null)
@@ -90,12 +93,11 @@ export const Chat: React.FC<ChatProps> = ({
 
   const loadMessages = async () => {
     try {
+      const headers = await getAuthHeaders(wallet)
       const response = await axios.get(
         `${API_BASE}/api/chat/${chatRoomId}/messages`,
         {
-          headers: {
-            'X-Wallet-Address': userWallet
-          }
+          headers
         }
       )
       setMessages(response.data.messages)
@@ -112,14 +114,13 @@ export const Chat: React.FC<ChatProps> = ({
 
     try {
       console.log('Sending message:', messageText)
+      const headers = await getAuthHeaders(wallet)
       await axios.post(`${API_BASE}/api/chat/message`, {
         chat_room_id: chatRoomId,
         sender_wallet: userWallet,
         message: messageText
       }, {
-        headers: {
-          'X-Wallet-Address': userWallet
-        }
+        headers
       })
       console.log('✅ Message sent successfully')
     } catch (error) {

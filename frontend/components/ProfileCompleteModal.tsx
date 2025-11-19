@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { FiX, FiCheck } from 'react-icons/fi'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getAuthHeaders } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -72,6 +74,7 @@ const COUNTRIES = [
 ]
 
 export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ walletAddress, onComplete }) => {
+  const wallet = useWallet()
   const [bio, setBio] = useState('')
   const [country, setCountry] = useState('')
   const [favouriteCT, setFavouriteCT] = useState('')
@@ -123,6 +126,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
     setLoading(true)
     try {
       const finalVenue = venue === 'Other' ? customVenue : venue
+      const headers = await getAuthHeaders(wallet)
       await axios.post(`${API_BASE}/api/users/${walletAddress}/complete-profile`, {
         bio: bio.trim(),
         country: country,
@@ -132,9 +136,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
         asset_choice_6m: assetChoice.trim(),
         twitter_account: twitterAccount.trim() || null  // Optional field
       }, {
-        headers: {
-          'X-Wallet-Address': walletAddress
-        }
+        headers
       })
       
       toast.success('Profile completed! 🎉')

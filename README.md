@@ -12,6 +12,7 @@ Smart Money Tinder is a revolutionary platform that allows you to discover and c
 ## ✨ Features
 
 - 🔐 **Solana Wallet Integration** - Connect with Phantom, Solflare, and other popular wallets
+- 🔒 **Cryptographic Signature Verification** - Production-grade security with Ed25519 signatures
 - 📊 **Real-time Trading Data** - View 90-day PnL summaries and current balance via Nansen API
 - 💚 **Tinder-style Swiping** - Swipe right to like, left to pass
 - 🎉 **Instant Matching** - When two traders like each other, it's an instant match!
@@ -118,6 +119,44 @@ Frontend runs on `http://localhost:3000`
 - Navigate to "Matches" tab
 - Click on a match to start chatting in real-time
 
+## 🔒 Security & Authentication
+
+Smart Money Tinder implements **cryptographic signature verification** to ensure only wallet owners can perform actions on their accounts.
+
+### Security Modes
+
+Set via environment variables on your backend:
+
+| Mode | `REQUIRE_AUTH` | `REQUIRE_SIGNATURE` | Use Case |
+|------|---------------|---------------------|----------|
+| **Development** | `false` | `false` | Local testing only |
+| **Basic Auth** | `true` | `false` | Staging/testing |
+| **🔒 Production** | `true` | `true` | **Live users (RECOMMENDED)** |
+
+### How It Works
+
+1. User clicks "Update Profile" or sends a message
+2. Frontend prompts wallet to sign an authentication message
+3. Signed message + signature sent to backend
+4. Backend verifies signature using Ed25519 cryptography
+5. Request succeeds only if signature is valid
+
+**Result:** Impossible to spoof without private key! 🔐
+
+For detailed implementation guide, see: **`SIGNATURE_VERIFICATION.md`**
+
+### Quick Setup for Production
+
+```bash
+# In Render.com Environment Variables:
+REQUIRE_AUTH=true
+REQUIRE_SIGNATURE=true
+```
+
+That's it! Your app is now cryptographically secured. ✅
+
+---
+
 ## 🚀 Deploy to Production (Render)
 
 **See `QUICKSTART_POSTGRESQL.md` for full deployment guide.**
@@ -126,9 +165,9 @@ Quick summary:
 
 1. **Push code to GitHub**
 2. **Create PostgreSQL database on Render** (free tier available)
-3. **Deploy backend web service** with `DATABASE_URL` environment variable
+3. **Deploy backend web service** with `DATABASE_URL`, `REQUIRE_AUTH=true`, `REQUIRE_SIGNATURE=true`
 4. **Deploy frontend** (Vercel or Render Static Site)
-5. **Done!** Your data now persists forever 🎉
+5. **Done!** Your data persists forever and is fully secured 🎉
 
 **Deployment time:** ~15 minutes
 

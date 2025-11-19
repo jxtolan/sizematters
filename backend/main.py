@@ -11,6 +11,9 @@ import os
 import time
 from database import db
 import re
+import base58
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -25,25 +28,88 @@ app.add_middleware(
 
 # Authentication configuration
 REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "false").lower() == "true"
-if REQUIRE_AUTH:
-    print("🔒 Authentication ENABLED - All endpoints require wallet signatures")
+REQUIRE_SIGNATURE = os.getenv("REQUIRE_SIGNATURE", "false").lower() == "true"
+
+if REQUIRE_AUTH and REQUIRE_SIGNATURE:
+    print("🔒 FULL SECURITY ENABLED - All endpoints require cryptographic wallet signatures")
+elif REQUIRE_AUTH:
+    print("🔓 BASIC AUTH ENABLED - Endpoints require wallet headers (no signature verification)")
 else:
     print("⚠️  Authentication DISABLED - Running in development mode (NOT SECURE FOR PRODUCTION!)")
 
-# Simple authentication dependency
+def verify_solana_signature(wallet_address: str, message: str, signature: str) -> bool:
+    """
+    Verify a Solana wallet signature using ed25519
+    
+    Args:
+        wallet_address: Base58-encoded public key (Solana wallet address)
+        message: The message that was signed
+        signature: Base58-encoded signature
+    
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    try:
+        # Decode the public key (wallet address) from base58
+        public_key_bytes = base58.b58decode(wallet_address)
+        
+        # Create a VerifyKey from the public key
+        verify_key = VerifyKey(public_key_bytes)
+        
+        # Decode the signature from base58
+        signature_bytes = base58.b58decode(signature)
+        
+        # Verify the signature
+        # Solana signatures are 64 bytes: first 64 bytes are the signature
+        verify_key.verify(message.encode('utf-8'), signature_bytes)
+        
+        return True
+    except (BadSignatureError, ValueError, Exception) as e:
+        print(f"❌ Signature verification failed: {type(e).__name__}: {str(e)}")
+        return False
+
+# Authentication dependency with signature verification
 async def get_authenticated_wallet(
-    x_wallet_address: Optional[str] = Header(None)
+    x_wallet_address: Optional[str] = Header(None),
+    x_wallet_signature: Optional[str] = Header(None),
+    x_signature_message: Optional[str] = Header(None)
 ) -> Optional[str]:
     """
-    Get authenticated wallet address from headers
-    For now, just returns the wallet from header
-    TODO: Add signature verification for production
+    Get authenticated wallet address from headers with optional signature verification
+    
+    Headers required:
+    - X-Wallet-Address: The wallet address
+    - X-Wallet-Signature: Base58-encoded signature (if REQUIRE_SIGNATURE=true)
+    - X-Signature-Message: The message that was signed (if REQUIRE_SIGNATURE=true)
     """
-    if REQUIRE_AUTH and not x_wallet_address:
+    # Check if authentication is required
+    if not REQUIRE_AUTH:
+        return x_wallet_address
+    
+    # Basic check: wallet address must be provided
+    if not x_wallet_address:
         raise HTTPException(
             status_code=401,
             detail="Authentication required. Please provide X-Wallet-Address header"
         )
+    
+    # If signature verification is enabled, verify the signature
+    if REQUIRE_SIGNATURE:
+        if not x_wallet_signature or not x_signature_message:
+            raise HTTPException(
+                status_code=401,
+                detail="Signature verification required. Please provide X-Wallet-Signature and X-Signature-Message headers"
+            )
+        
+        # Verify the signature
+        if not verify_solana_signature(x_wallet_address, x_signature_message, x_wallet_signature):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid signature. Signature verification failed"
+            )
+        
+        print(f"✅ Signature verified for wallet: {x_wallet_address[:8]}...")
+    
     return x_wallet_address
 
 def verify_wallet_ownership(wallet_address: str, authenticated_wallet: Optional[str]):

@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { FiX, FiEdit2, FiSave } from 'react-icons/fi'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getAuthHeaders } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -72,6 +74,7 @@ const COUNTRIES = [
 ]
 
 export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) => {
+  const wallet = useWallet()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -99,10 +102,9 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
   const fetchProfile = async () => {
     try {
       setLoading(true)
+      const headers = await getAuthHeaders(wallet)
       const response = await axios.get(`${API_BASE}/api/users/${walletAddress}/profile`, {
-        headers: {
-          'X-Wallet-Address': walletAddress
-        }
+        headers
       })
       const profile = response.data
       
@@ -141,6 +143,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
     setSaving(true)
     try {
       const finalVenue = venue === 'Other' ? customVenue : venue
+      const headers = await getAuthHeaders(wallet)
       await axios.put(`${API_BASE}/api/users/${walletAddress}/profile`, {
         bio: bio.trim(),
         country: country,
@@ -150,9 +153,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
         asset_choice_6m: assetChoice.trim(),
         twitter_account: twitterAccount.trim() || null
       }, {
-        headers: {
-          'X-Wallet-Address': walletAddress
-        }
+        headers
       })
       
       toast.success('Profile updated! 🎉')

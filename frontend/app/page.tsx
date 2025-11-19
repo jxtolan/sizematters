@@ -10,6 +10,7 @@ import { MyProfile } from '@/components/MyProfile'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
+import { getAuthHeaders } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -30,7 +31,8 @@ interface Profile {
 }
 
 export default function Home() {
-  const { publicKey, connected } = useWallet()
+  const wallet = useWallet()
+  const { publicKey, connected } = wallet
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -96,14 +98,15 @@ export default function Home() {
     if (!publicKey || !profiles[currentProfileIndex]) return
 
     try {
+      // Get authenticated headers (with signature if available)
+      const headers = await getAuthHeaders(wallet)
+      
       const response = await axios.post(`${API_BASE}/api/swipe`, {
         user_wallet: publicKey.toString(),
         target_wallet: profiles[currentProfileIndex].wallet_address,
         direction
       }, {
-        headers: {
-          'X-Wallet-Address': publicKey.toString()
-        }
+        headers
       })
 
       if (response.data.match_created) {
