@@ -14,10 +14,11 @@ export interface SignedRequest {
 /**
  * Generate a timestamp-based message for signing
  * This prevents replay attacks by including a timestamp
+ * Note: No newlines allowed (HTTP header restrictions)
  */
 export function generateAuthMessage(): string {
   const timestamp = Date.now();
-  const message = `Smart Money Tinder Authentication\nTimestamp: ${timestamp}`;
+  const message = `Smart Money Tinder Authentication | Timestamp: ${timestamp}`;
   return message;
 }
 
