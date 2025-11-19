@@ -10,7 +10,7 @@ import { MyProfile } from '@/components/MyProfile'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
-import { getAuthHeaders } from '@/utils/auth'
+import { getAuthHeaders, clearSessionToken } from '@/utils/auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -46,6 +46,9 @@ export default function Home() {
     if (connected && publicKey) {
       checkUserProfile()
       loadProfiles()
+    } else {
+      // Clear session when wallet disconnects
+      clearSessionToken()
     }
   }, [connected, publicKey])
 

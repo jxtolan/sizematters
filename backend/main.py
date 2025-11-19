@@ -14,6 +14,8 @@ import re
 import base58
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
+import jwt
+import secrets
 
 app = FastAPI(title="Smart Money Tinder API")
 
@@ -30,12 +32,19 @@ app.add_middleware(
 REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "false").lower() == "true"
 REQUIRE_SIGNATURE = os.getenv("REQUIRE_SIGNATURE", "false").lower() == "true"
 
+# JWT configuration for session tokens
+JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_urlsafe(32))  # Auto-generate if not set
+JWT_ALGORITHM = "HS256"
+SESSION_EXPIRY_HOURS = 1  # Session tokens valid for 1 hour
+
 if REQUIRE_AUTH and REQUIRE_SIGNATURE:
-    print("🔒 FULL SECURITY ENABLED - All endpoints require cryptographic wallet signatures")
+    print("🔒 FULL SECURITY ENABLED - All endpoints require cryptographic wallet signatures or session tokens")
 elif REQUIRE_AUTH:
     print("🔓 BASIC AUTH ENABLED - Endpoints require wallet headers (no signature verification)")
 else:
     print("⚠️  Authentication DISABLED - Running in development mode (NOT SECURE FOR PRODUCTION!)")
+
+print(f"🎫 Session tokens enabled - Valid for {SESSION_EXPIRY_HOURS} hour(s)")
 
 def verify_solana_signature(wallet_address: str, message: str, signature: str) -> bool:
     """
@@ -68,29 +77,80 @@ def verify_solana_signature(wallet_address: str, message: str, signature: str) -
         print(f"❌ Signature verification failed: {type(e).__name__}: {str(e)}")
         return False
 
-# Authentication dependency with signature verification
+def create_session_token(wallet_address: str) -> str:
+    """
+    Create a JWT session token for a wallet
+    
+    Args:
+        wallet_address: The authenticated wallet address
+    
+    Returns:
+        JWT token string
+    """
+    expiry = datetime.utcnow() + timedelta(hours=SESSION_EXPIRY_HOURS)
+    payload = {
+        "wallet": wallet_address,
+        "exp": expiry,
+        "iat": datetime.utcnow()
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+def verify_session_token(token: str) -> Optional[str]:
+    """
+    Verify a JWT session token and return the wallet address
+    
+    Args:
+        token: JWT token string
+    
+    Returns:
+        Wallet address if valid, None otherwise
+    """
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload.get("wallet")
+    except jwt.ExpiredSignatureError:
+        print("⏰ Session token expired")
+        return None
+    except jwt.InvalidTokenError as e:
+        print(f"❌ Invalid session token: {e}")
+        return None
+
+# Authentication dependency with session token OR signature verification
 async def get_authenticated_wallet(
     x_wallet_address: Optional[str] = Header(None),
+    x_session_token: Optional[str] = Header(None),
     x_wallet_signature: Optional[str] = Header(None),
     x_signature_message: Optional[str] = Header(None)
 ) -> Optional[str]:
     """
-    Get authenticated wallet address from headers with optional signature verification
+    Get authenticated wallet address from headers
     
-    Headers required:
-    - X-Wallet-Address: The wallet address
-    - X-Wallet-Signature: Base58-encoded signature (if REQUIRE_SIGNATURE=true)
-    - X-Signature-Message: The message that was signed (if REQUIRE_SIGNATURE=true)
+    Supports two authentication methods:
+    1. Session Token (preferred): X-Session-Token header
+    2. Signature: X-Wallet-Address + X-Wallet-Signature + X-Signature-Message
+    
+    Headers accepted:
+    - X-Session-Token: JWT session token (from /api/auth/session)
+    - OR X-Wallet-Address + X-Wallet-Signature + X-Signature-Message
     """
     # Check if authentication is required
     if not REQUIRE_AUTH:
         return x_wallet_address
     
-    # Basic check: wallet address must be provided
+    # Method 1: Try session token first (preferred method)
+    if x_session_token:
+        wallet_from_token = verify_session_token(x_session_token)
+        if wallet_from_token:
+            return wallet_from_token
+        # Token invalid/expired, fall through to try signature
+        print("⚠️  Session token invalid, trying signature auth...")
+    
+    # Method 2: Signature verification
     if not x_wallet_address:
         raise HTTPException(
             status_code=401,
-            detail="Authentication required. Please provide X-Wallet-Address header"
+            detail="Authentication required. Please provide X-Session-Token or X-Wallet-Address header"
         )
     
     # If signature verification is enabled, verify the signature
@@ -98,7 +158,7 @@ async def get_authenticated_wallet(
         if not x_wallet_signature or not x_signature_message:
             raise HTTPException(
                 status_code=401,
-                detail="Signature verification required. Please provide X-Wallet-Signature and X-Signature-Message headers"
+                detail="Authentication required. Please provide X-Session-Token or sign a message"
             )
         
         # Verify the signature
@@ -500,6 +560,43 @@ async def set_nansen_config(config: NansenConfig):
     global nansen_api_key
     nansen_api_key = config.api_key
     return {"status": "success", "message": "Nansen API key configured"}
+
+class SessionRequest(BaseModel):
+    wallet_address: str
+    signature: str
+    message: str
+
+@app.post("/api/auth/session")
+async def create_session(session_req: SessionRequest):
+    """
+    Create a session token by verifying a wallet signature
+    
+    User signs a message once, gets a JWT token valid for 1 hour.
+    Use this token for all subsequent requests (no need to sign again!)
+    """
+    # Verify the signature
+    if not verify_solana_signature(
+        session_req.wallet_address, 
+        session_req.message, 
+        session_req.signature
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid signature. Could not verify wallet ownership"
+        )
+    
+    # Create session token
+    token = create_session_token(session_req.wallet_address)
+    expiry = datetime.utcnow() + timedelta(hours=SESSION_EXPIRY_HOURS)
+    
+    print(f"🎫 Session created for wallet: {session_req.wallet_address[:8]}...")
+    
+    return {
+        "session_token": token,
+        "wallet_address": session_req.wallet_address,
+        "expires_at": expiry.isoformat(),
+        "expires_in_seconds": SESSION_EXPIRY_HOURS * 3600
+    }
 
 @app.post("/api/users")
 async def check_user(user: UserCreate):
