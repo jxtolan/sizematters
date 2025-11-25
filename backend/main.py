@@ -4,6 +4,8 @@ from pydantic import BaseModel, validator
 from typing import List, Optional, Dict
 import json
 import requests
+import httpx
+import asyncio
 from datetime import datetime, timedelta
 import uuid
 from collections import defaultdict
@@ -190,46 +192,105 @@ def verify_wallet_ownership(wallet_address: str, authenticated_wallet: Optional[
 db.init_db()
 
 # In-memory cache for Nansen API responses
-# Structure: { wallet_address: { 'pnl': {...}, 'balance': {...}, 'timestamp': 123456 } }
+# Structure: { wallet_address: { 'pnl': {'data': {...}, 'timestamp': 123}, 'balance': {'data': {...}, 'timestamp': 456} } }
+# PnL cached for 1 week (historical data changes slowly)
+# Balance cached for 30 min (current balances change frequently)
 nansen_cache = {}
-CACHE_TTL_SECONDS = 1800  # 30 minutes (Nansen data doesn't change that fast)
+CACHE_TTL_PNL_SECONDS = 604800  # 1 week (PnL doesn't change much)
+CACHE_TTL_BALANCE_SECONDS = 1800  # 30 minutes (balance changes more frequently)
+
+# Rate limiting for Nansen API
+rate_limiter = {
+    'requests': [],  # List of request timestamps
+    'per_second_limit': 10,  # Max 10 requests per second
+    'per_minute_limit': 250  # Max 250 requests per minute
+}
+
+async def wait_for_rate_limit():
+    """Rate limiter to ensure we don't exceed 10 req/sec or 250 req/min"""
+    current_time = time.time()
+    
+    # Clean up old timestamps (older than 60 seconds)
+    rate_limiter['requests'] = [
+        t for t in rate_limiter['requests'] 
+        if current_time - t < 60
+    ]
+    
+    # Check per-minute limit
+    if len(rate_limiter['requests']) >= rate_limiter['per_minute_limit']:
+        oldest_request = rate_limiter['requests'][0]
+        wait_time = 60 - (current_time - oldest_request)
+        if wait_time > 0:
+            print(f"⏳ Rate limit: waiting {wait_time:.2f}s (250/min)")
+            await asyncio.sleep(wait_time)
+            current_time = time.time()
+            rate_limiter['requests'] = [
+                t for t in rate_limiter['requests'] 
+                if current_time - t < 60
+            ]
+    
+    # Check per-second limit
+    recent_requests = [
+        t for t in rate_limiter['requests'] 
+        if current_time - t < 1
+    ]
+    if len(recent_requests) >= rate_limiter['per_second_limit']:
+        wait_time = 1 - (current_time - recent_requests[0])
+        if wait_time > 0:
+            print(f"⏳ Rate limit: waiting {wait_time:.2f}s (10/sec)")
+            await asyncio.sleep(wait_time)
+    
+    # Record this request
+    rate_limiter['requests'].append(time.time())
 
 def get_cached_data(wallet_address: str, data_type: str):
     """Get cached Nansen data if not expired"""
     if wallet_address not in nansen_cache:
         return None
     
-    cache_entry = nansen_cache[wallet_address]
+    cache_entry = nansen_cache[wallet_address].get(data_type, {})
+    
+    # Determine TTL based on data type
+    ttl = CACHE_TTL_PNL_SECONDS if data_type == 'pnl' else CACHE_TTL_BALANCE_SECONDS
     
     # Check if cache expired
-    if time.time() - cache_entry.get('timestamp', 0) > CACHE_TTL_SECONDS:
-        # Cache expired, remove it
-        del nansen_cache[wallet_address]
+    if time.time() - cache_entry.get('timestamp', 0) > ttl:
         return None
     
-    return cache_entry.get(data_type)
+    return cache_entry.get('data')
 
 def set_cached_data(wallet_address: str, data_type: str, data: dict):
-    """Cache Nansen API response"""
+    """Cache Nansen API response with separate timestamps per data type"""
     if wallet_address not in nansen_cache:
-        nansen_cache[wallet_address] = {'timestamp': time.time()}
-    else:
-        nansen_cache[wallet_address]['timestamp'] = time.time()
+        nansen_cache[wallet_address] = {}
     
-    nansen_cache[wallet_address][data_type] = data
+    nansen_cache[wallet_address][data_type] = {
+        'data': data,
+        'timestamp': time.time()
+    }
 
 def clear_expired_cache():
     """Periodic cleanup of expired cache entries"""
     current_time = time.time()
-    expired_wallets = [
-        wallet for wallet, data in nansen_cache.items()
-        if current_time - data.get('timestamp', 0) > CACHE_TTL_SECONDS
-    ]
-    for wallet in expired_wallets:
+    wallets_to_remove = []
+    
+    for wallet, cache_data in nansen_cache.items():
+        # Check if all data types are expired
+        all_expired = True
+        for data_type, entry in cache_data.items():
+            ttl = CACHE_TTL_PNL_SECONDS if data_type == 'pnl' else CACHE_TTL_BALANCE_SECONDS
+            if current_time - entry.get('timestamp', 0) <= ttl:
+                all_expired = False
+                break
+        
+        if all_expired:
+            wallets_to_remove.append(wallet)
+    
+    for wallet in wallets_to_remove:
         del nansen_cache[wallet]
     
-    if expired_wallets:
-        print(f"🧹 Cleared {len(expired_wallets)} expired cache entries")
+    if wallets_to_remove:
+        print(f"🧹 Cleared {len(wallets_to_remove)} fully expired cache entries")
 
 # Helper function to format numbers with k/M abbreviations
 def format_currency(amount):
@@ -802,9 +863,91 @@ async def update_my_profile(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
+async def fetch_profile_data(wallet: str, ph: str, is_demo_func):
+    """Helper function to fetch all data for a single profile in parallel"""
+    # Fetch Nansen data in parallel
+    pnl_task = get_nansen_pnl(wallet)
+    balance_task = get_nansen_balance(wallet)
+    
+    # Execute both API calls in parallel
+    pnl_data, balance_data = await asyncio.gather(pnl_task, balance_task)
+    
+    # For REAL users (not demos), check if we have valid data
+    if not is_demo_func(wallet):
+        has_real_pnl = (
+            pnl_data.get("total_trades", 0) > 0 and 
+            "time_period" in pnl_data
+        )
+        has_real_balance = balance_data.get("total_balance_usd", 0) > 0
+        
+        if not (has_real_pnl or has_real_balance):
+            print(f"⚠️ Skipping real user {wallet[:8]}... - No valid Nansen data")
+            return None
+    
+    # Get profile data from database
+    with db.get_connection() as conn:
+        cursor = db.get_cursor(conn)
+        query = f"""SELECT trader_number, bio, country, favourite_ct_account, 
+                     worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
+                     FROM users WHERE wallet_address = {ph}"""
+        cursor.execute(query, (wallet,))
+        profile_result = cursor.fetchone()
+    
+    if profile_result:
+        # Convert to dict if needed
+        if isinstance(profile_result, dict):
+            trader_number = profile_result['trader_number']
+            trader_display = format_trader_number(trader_number) if trader_number else "Demo"
+            profile_data = {
+                "trader_number": trader_number,
+                "trader_number_formatted": trader_display,
+                "bio": profile_result['bio'],
+                "country": profile_result['country'],
+                "favourite_ct_account": profile_result['favourite_ct_account'],
+                "worst_ct_account": profile_result['worst_ct_account'],
+                "favourite_trading_venue": profile_result['favourite_trading_venue'],
+                "asset_choice_6m": profile_result['asset_choice_6m'],
+                "twitter_account": profile_result['twitter_account']
+            }
+        else:
+            trader_number = profile_result[0]
+            trader_display = format_trader_number(trader_number) if trader_number else "Demo"
+            profile_data = {
+                "trader_number": trader_number,
+                "trader_number_formatted": trader_display,
+                "bio": profile_result[1],
+                "country": profile_result[2],
+                "favourite_ct_account": profile_result[3],
+                "worst_ct_account": profile_result[4],
+                "favourite_trading_venue": profile_result[5],
+                "asset_choice_6m": profile_result[6],
+                "twitter_account": profile_result[7]
+            }
+    else:
+        # Demo profile
+        profile_data = {
+            "trader_number": None,
+            "trader_number_formatted": "Demo",
+            "bio": None,
+            "country": None,
+            "favourite_ct_account": None,
+            "worst_ct_account": None,
+            "favourite_trading_venue": None,
+            "asset_choice_6m": None,
+            "twitter_account": None
+        }
+    
+    return {
+        "wallet_address": wallet,
+        "pnl_summary": pnl_data,
+        "balance": balance_data,
+        "is_demo": is_demo_func(wallet),
+        **profile_data
+    }
+
 @app.get("/api/profiles/{wallet_address}")
 async def get_profiles(wallet_address: str):
-    """Get profiles to swipe through (excluding already swiped wallets)"""
+    """Get profiles to swipe through (excluding already swiped wallets) - PARALLEL LOADING"""
     # Cleanup expired cache entries periodically
     clear_expired_cache()
     
@@ -828,97 +971,25 @@ async def get_profiles(wallet_address: str):
                          if w != wallet_address and w not in swiped_wallets]
     
     print(f"📊 Cache status: {len(nansen_cache)} wallets cached")
+    print(f"🚀 Loading 3 profiles in parallel...")
     
-    profiles = []
     is_demo = lambda w: w in DEMO_TRADERS
     
-    for wallet in available_wallets[:12]:  # Check 12 to get ~10 valid profiles
-        if len(profiles) >= 8:  # Return 8 profiles (faster, user can load more)
-            break
-            
-        # Get Nansen data
-        pnl_data = get_nansen_pnl(wallet)
-        balance_data = get_nansen_balance(wallet)
-        
-        # For REAL users (not demos), skip if no valid data
-        if not is_demo(wallet):
-            # Check if we have real Nansen data (not mock/error data)
-            has_real_pnl = (
-                pnl_data.get("total_trades", 0) > 0 and 
-                "time_period" in pnl_data
-            )
-            has_real_balance = balance_data.get("total_balance_usd", 0) > 0
-            
-            if not (has_real_pnl or has_real_balance):
-                print(f"⚠️ Skipping real user {wallet[:8]}... - No valid Nansen data")
-                continue
-        
-        # Get profile data from database
-        with db.get_connection() as conn2:
-            cursor2 = db.get_cursor(conn2)
-            query2 = f"""SELECT trader_number, bio, country, favourite_ct_account, 
-                         worst_ct_account, favourite_trading_venue, asset_choice_6m, twitter_account 
-                         FROM users WHERE wallet_address = {ph}"""
-            cursor2.execute(query2, (wallet,))
-            profile_result = cursor2.fetchone()
-        
-        if profile_result:
-            # Convert to dict if needed
-            if isinstance(profile_result, dict):
-                trader_number = profile_result['trader_number']
-                trader_display = format_trader_number(trader_number) if trader_number else "Demo"
-                profile_data = {
-                    "trader_number": trader_number,
-                    "trader_number_formatted": trader_display,
-                    "bio": profile_result['bio'],
-                    "country": profile_result['country'],
-                    "favourite_ct_account": profile_result['favourite_ct_account'],
-                    "worst_ct_account": profile_result['worst_ct_account'],
-                    "favourite_trading_venue": profile_result['favourite_trading_venue'],
-                    "asset_choice_6m": profile_result['asset_choice_6m'],
-                    "twitter_account": profile_result['twitter_account']
-                }
-            else:
-                trader_number = profile_result[0]
-                trader_display = format_trader_number(trader_number) if trader_number else "Demo"
-                profile_data = {
-                    "trader_number": trader_number,
-                    "trader_number_formatted": trader_display,
-                    "bio": profile_result[1],
-                    "country": profile_result[2],
-                    "favourite_ct_account": profile_result[3],
-                    "worst_ct_account": profile_result[4],
-                    "favourite_trading_venue": profile_result[5],
-                    "asset_choice_6m": profile_result[6],
-                    "twitter_account": profile_result[7]
-                }
-        else:
-            # Demo profile
-            profile_data = {
-                "trader_number": None,
-                "trader_number_formatted": "Demo",
-                "bio": None,
-                "country": None,
-                "favourite_ct_account": None,
-                "worst_ct_account": None,
-                "favourite_trading_venue": None,
-                "asset_choice_6m": None,
-                "twitter_account": None
-            }
-        
-        profiles.append({
-            "wallet_address": wallet,
-            "pnl_summary": pnl_data,
-            "balance": balance_data,
-            "is_demo": is_demo(wallet),
-            **profile_data
-        })
+    # Load 3 profiles in parallel (faster initial load)
+    wallets_to_fetch = available_wallets[:6]  # Fetch 6 to ensure we get 3 valid profiles
+    
+    # Fetch all profiles in parallel
+    fetch_tasks = [fetch_profile_data(wallet, ph, is_demo) for wallet in wallets_to_fetch]
+    profile_results = await asyncio.gather(*fetch_tasks)
+    
+    # Filter out None results (invalid profiles)
+    profiles = [p for p in profile_results if p is not None][:3]  # Return exactly 3 profiles
     
     print(f"📊 Returning {len(profiles)} valid profiles")
     return {"profiles": profiles}
 
-def get_nansen_pnl(wallet_address: str):
-    """Fetch PnL summary from Nansen API with 90D fallback to all-time (CACHED)"""
+async def get_nansen_pnl(wallet_address: str):
+    """Fetch PnL summary from Nansen API with 90D fallback to all-time (CACHED, ASYNC)"""
     # Check cache first
     cached_pnl = get_cached_data(wallet_address, 'pnl')
     if cached_pnl:
@@ -945,25 +1016,29 @@ def get_nansen_pnl(wallet_address: str):
         return mock_data
     
     try:
+        # Wait for rate limit before making request
+        await wait_for_rate_limit()
+        
         # Try 90 days first
         end_date = datetime.now()
         start_date_90d = end_date - timedelta(days=90)
         
         print(f"📊 Fetching Nansen 90D PnL for {wallet_address[:8]}...")
         
-        response = requests.post(
-            "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
-            headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
-            data=json.dumps({
-                "address": wallet_address,
-                "chain": "solana",
-                "date": {
-                    "from": start_date_90d.strftime("%Y-%m-%dT00:00:00Z"),
-                    "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
-                }
-            }),
-            timeout=10
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
+                headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
+                json={
+                    "address": wallet_address,
+                    "chain": "solana",
+                    "date": {
+                        "from": start_date_90d.strftime("%Y-%m-%dT00:00:00Z"),
+                        "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
+                    }
+                },
+                timeout=10
+            )
         
         print(f"📊 Nansen 90D PnL Response: Status {response.status_code}")
         
@@ -978,19 +1053,22 @@ def get_nansen_pnl(wallet_address: str):
                 # Try all-time (5 years)
                 start_date_alltime = end_date - timedelta(days=1825)
                 
-                response_alltime = requests.post(
-                    "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
-                    headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
-                    data=json.dumps({
-                        "address": wallet_address,
-                        "chain": "solana",
-                        "date": {
-                            "from": start_date_alltime.strftime("%Y-%m-%dT00:00:00Z"),
-                            "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
-                        }
-                    }),
-                    timeout=10
-                )
+                await wait_for_rate_limit()
+                
+                async with httpx.AsyncClient() as client:
+                    response_alltime = await client.post(
+                        "https://api.nansen.ai/api/v1/profiler/address/pnl-summary",
+                        headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
+                        json={
+                            "address": wallet_address,
+                            "chain": "solana",
+                            "date": {
+                                "from": start_date_alltime.strftime("%Y-%m-%dT00:00:00Z"),
+                                "to": end_date.strftime("%Y-%m-%dT23:59:59Z")
+                            }
+                        },
+                        timeout=10
+                    )
                 
                 if response_alltime.status_code == 200:
                     data = response_alltime.json()
@@ -1016,7 +1094,7 @@ def get_nansen_pnl(wallet_address: str):
                 "time_period": time_period
             }
             
-            # Cache the successful result
+            # Cache the successful result (1 week cache)
             set_cached_data(wallet_address, 'pnl', result)
             return result
         else:
@@ -1048,8 +1126,8 @@ def get_nansen_pnl(wallet_address: str):
             "time_period": "90D"
         }
 
-def get_nansen_balance(wallet_address: str):
-    """Fetch current balance from Nansen API (CACHED)"""
+async def get_nansen_balance(wallet_address: str):
+    """Fetch current balance from Nansen API (CACHED, ASYNC)"""
     # Check cache first
     cached_balance = get_cached_data(wallet_address, 'balance')
     if cached_balance:
@@ -1074,22 +1152,26 @@ def get_nansen_balance(wallet_address: str):
         return mock_data
     
     try:
+        # Wait for rate limit before making request
+        await wait_for_rate_limit()
+        
         print(f"💰 Fetching Nansen balance for {wallet_address[:8]}...")
         
-        response = requests.post(
-            "https://api.nansen.ai/api/v1/profiler/address/current-balance",
-            headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
-            data=json.dumps({
-                "address": wallet_address,
-                "chain": "solana",
-                "hide_spam_token": True,
-                "pagination": {
-                    "page": 1,
-                    "per_page": 10
-                }
-            }),
-            timeout=10
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.nansen.ai/api/v1/profiler/address/current-balance",
+                headers={"apiKey": nansen_api_key, "Content-Type": "application/json"},
+                json={
+                    "address": wallet_address,
+                    "chain": "solana",
+                    "hide_spam_token": True,
+                    "pagination": {
+                        "page": 1,
+                        "per_page": 10
+                    }
+                },
+                timeout=10
+            )
         
         print(f"💰 Nansen Balance Response: Status {response.status_code}")
         
@@ -1119,7 +1201,7 @@ def get_nansen_balance(wallet_address: str):
                 "tokens": tokens[:5]  # Include top 5 tokens for detail
             }
             
-            # Cache the successful result
+            # Cache the successful result (30 min cache)
             set_cached_data(wallet_address, 'balance', result)
             return result
         else:
