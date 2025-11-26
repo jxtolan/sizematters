@@ -222,7 +222,7 @@ export const Chat: React.FC<ChatProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1 bg-gray-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 bg-gray-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-coral"
           />
           <button
             type="button"

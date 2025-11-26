@@ -214,7 +214,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
         <div className="space-y-6">
           {/* Bio */}
           <div>
-            <label className="block text-sm font-semibold text-purple-300 mb-2">
+            <label className="block text-sm font-semibold text-coral mb-2">
               Bio * 📝
             </label>
             <textarea
@@ -231,7 +231,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
 
           {/* Country */}
           <div>
-            <label className="block text-sm font-semibold text-purple-300 mb-2">
+            <label className="block text-sm font-semibold text-coral mb-2">
               Country * {selectedCountry?.flag}
             </label>
             <select
@@ -251,7 +251,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
 
           {/* Asset Choice */}
           <div>
-            <label className="block text-sm font-semibold text-purple-300 mb-2">
+            <label className="block text-sm font-semibold text-coral mb-2">
               Asset of Choice (Next 6 months) * 🎯
             </label>
             <input
@@ -348,7 +348,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 rounded-xl transition glow-purple flex items-center justify-center gap-2"
+                className="flex-1 bg-coral hover:bg-[#FF4030] text-white font-bold py-4 rounded-xl transition glow-coral flex items-center justify-center gap-2"
               >
                 <FiEdit2 /> Edit Profile
               </button>

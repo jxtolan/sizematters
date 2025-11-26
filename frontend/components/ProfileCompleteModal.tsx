@@ -174,7 +174,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
               <div
                 key={s}
                 className={`flex-1 h-2 rounded-full ${
-                  s <= step ? 'bg-purple-500' : 'bg-gray-700'
+                  s <= step ? 'bg-coral' : 'bg-gray-700'
                 }`}
               />
             ))}
@@ -185,7 +185,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
           <div className="space-y-6">
             {/* Bio */}
             <div>
-              <label className="block text-sm font-semibold text-purple-300 mb-2">
+              <label className="block text-sm font-semibold text-coral mb-2">
                 Bio * 📝
               </label>
               <textarea
@@ -201,7 +201,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
 
             {/* Country */}
             <div>
-              <label className="block text-sm font-semibold text-purple-300 mb-2">
+              <label className="block text-sm font-semibold text-coral mb-2">
                 Country * {selectedCountry?.flag}
               </label>
               <select
@@ -220,7 +220,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
 
             {/* Asset Choice */}
             <div>
-              <label className="block text-sm font-semibold text-purple-300 mb-2">
+              <label className="block text-sm font-semibold text-coral mb-2">
                 Asset of Choice (Next 6 months) * 🎯
               </label>
               <input
@@ -235,7 +235,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
 
             <button
               onClick={() => setStep(2)}
-              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 rounded-xl transition glow-purple"
+              className="w-full bg-coral hover:bg-[#FF4030] text-white font-bold py-4 rounded-xl transition glow-coral"
             >
               Next →
             </button>
