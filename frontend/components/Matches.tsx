@@ -66,15 +66,14 @@ export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
   }
 
   return (
-    <div className="glass rounded-3xl p-6 min-h-[600px] border-2 border-purple-500/30">
+    <div className="glass rounded-3xl p-6 min-h-[600px] border-2 border-[#FD3021]/30">
       <h2 className="text-3xl font-bold gradient-text mb-6 flex items-center gap-3">
-        <span className="text-4xl">💎</span>
         Your Matches
       </h2>
 
       {loading ? (
         <div className="text-center text-white py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FD3021] mx-auto mb-4"></div>
           <p>Loading your connections... 🚀</p>
         </div>
       ) : matches.length === 0 ? (
@@ -91,12 +90,11 @@ export const Matches: React.FC<MatchesProps> = ({ walletAddress }) => {
               onClick={() => setSelectedChat(match.chat_room_id)}
               className="w-full glass hover:glow-cyan p-5 rounded-2xl transition-all flex items-center gap-4 group border-2 border-cyan-500/20 hover:border-cyan-500/50"
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0 glow-purple pulse-glow">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#FD3021] via-[#FF6B5B] to-[#CEB6BD] rounded-full flex items-center justify-center flex-shrink-0 glow-coral pulse-glow">
                 <span className="text-3xl">🔥</span>
               </div>
               <div className="flex-1 text-left min-w-0">
                 <p className="text-white font-bold text-lg mb-1 flex items-center gap-2">
-                  <span>💎</span>
                   Trader {formatWallet(match.wallet_address)}
                 </p>
                 <p className="text-sm text-gray-400 font-mono truncate">

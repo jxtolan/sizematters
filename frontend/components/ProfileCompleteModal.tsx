@@ -158,7 +158,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
       animate={{ opacity: 1 }}
     >
       <motion.div
-        className="glass max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-3xl border border-purple-500/30"
+        className="glass max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-3xl border border-[#FD3021]/30"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
       >
@@ -192,7 +192,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell us about your trading style..."
-                className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#FD3021] resize-none"
                 rows={4}
                 maxLength={300}
               />
@@ -207,7 +207,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white focus:outline-none focus:border-[#FD3021]"
               >
                 <option value="">Select your country...</option>
                 {COUNTRIES.map(c => (
@@ -228,7 +228,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
                 value={assetChoice}
                 onChange={(e) => setAssetChoice(e.target.value)}
                 placeholder="e.g., SOL, BTC, ETH, Memecoins..."
-                className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#FD3021]"
                 maxLength={50}
               />
             </div>
@@ -252,7 +252,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
                 value={favouriteCT}
                 onChange={(e) => setFavouriteCT(e.target.value)}
                 placeholder="@username"
-                className="w-full p-4 bg-gray-800 border border-green-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                className="w-full p-4 bg-gray-800 border border-[#CEB6BD]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#CEB6BD]"
                 maxLength={50}
               />
             </div>
@@ -325,7 +325,7 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-xl transition glow-purple disabled:opacity-50"
+                className="flex-2 bg-gradient-to-r from-[#FD3021] to-[#CEB6BD] hover:from-[#FF4030] hover:to-[#D8C0C7] text-white font-bold py-4 px-8 rounded-xl transition glow-coral disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Complete Profile! 🚀'}
               </button>

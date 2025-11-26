@@ -133,7 +133,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
   return (
     <div className="relative">
       <motion.div
-        className="glass rounded-3xl overflow-hidden shadow-2xl border-2 border-purple-500/30"
+        className="glass rounded-3xl overflow-hidden shadow-2xl border-2 border-[#FD3021]/30"
         style={{ x, rotate, opacity }}
         animate={controls}
         drag="x"
@@ -212,11 +212,11 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
             </div>
             <button
               onClick={handleCopyAddress}
-              className="flex items-center gap-2 text-sm text-gray-400 font-mono hover:text-purple-400 transition group"
+              className="flex items-center gap-2 text-sm text-gray-400 font-mono hover:text-[#FD3021]-400 transition group"
             >
               <span className="break-all">{profile.wallet_address}</span>
               {copied ? (
-                <FiCheck className="text-green-400 flex-shrink-0" />
+                <FiCheck className="text-[#CEB6BD]-400 flex-shrink-0" />
               ) : (
                 <FiCopy className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition" />
               )}
@@ -225,7 +225,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
 
           {/* Bio */}
           {profile.bio && (
-            <div className="mb-6 glass p-4 rounded-2xl border border-purple-500/30 glow-purple">
+            <div className="mb-6 glass p-4 rounded-2xl border border-[#FD3021]/30 glow-coral">
               <p className="text-gray-200 italic">💬 "{profile.bio}"</p>
             </div>
           )}
@@ -233,31 +233,31 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* PnL Card */}
-            <div className="glass p-5 rounded-2xl border border-purple-500/50 glow-purple">
+            <div className="glass p-5 rounded-2xl border border-[#FD3021]/50 glow-coral">
               <div className="flex items-center gap-2 mb-2">
-                <FiTrendingUp className="text-purple-300" />
-                <p className="text-xs text-purple-300 font-semibold">
+                <FiTrendingUp className="text-[#FD3021]-300" />
+                <p className="text-xs text-[#FD3021]-300 font-semibold">
                   📈 {profile.pnl_summary.time_period || '90D'} PnL
                 </p>
               </div>
               <p className="text-2xl font-bold gradient-text">
                 {profile.pnl_summary.total_pnl_formatted || '$0'}
               </p>
-              <p className="text-sm text-purple-200 mt-1">
+              <p className="text-sm text-[#FD3021]-200 mt-1">
                 {profile.pnl_summary.pnl_percentage || 0}% return 🚀
               </p>
             </div>
 
             {/* Balance Card */}
-            <div className="glass p-5 rounded-2xl border border-green-500/50 glow-green">
+            <div className="glass p-5 rounded-2xl border border-[#CEB6BD]/50 glow-pink">
               <div className="flex items-center gap-2 mb-2">
-                <FiDollarSign className="text-green-300" />
-                <p className="text-xs text-green-300 font-semibold">💰 Balance</p>
+                <FiDollarSign className="text-[#CEB6BD]-300" />
+                <p className="text-xs text-[#CEB6BD]-300 font-semibold">💰 Balance</p>
               </div>
               <p className="text-2xl font-bold gradient-text">
                 {profile.balance.total_balance_formatted || '$0'}
               </p>
-              <p className="text-sm text-green-200 mt-1">
+              <p className="text-sm text-[#CEB6BD]-200 mt-1">
                 {profile.balance.sol_balance_formatted || '0 SOL'} ⚡
               </p>
             </div>
@@ -274,8 +274,8 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
               </div>
             )}
             {profile.favourite_ct_account && (
-              <div className="glass p-4 rounded-xl border border-green-500/30">
-                <p className="text-xs text-green-300 mb-1">💚 Fav CT</p>
+              <div className="glass p-4 rounded-xl border border-[#CEB6BD]/30">
+                <p className="text-xs text-[#CEB6BD]-300 mb-1">💚 Fav CT</p>
                 <p className="text-sm text-white font-semibold truncate">
                   {profile.favourite_ct_account}
                 </p>
@@ -286,7 +286,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
           {/* View More Toggle */}
           <button
             onClick={() => setShowMore(!showMore)}
-            className="w-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 text-purple-200 font-semibold py-3 rounded-xl transition mb-4"
+            className="w-full bg-[#FD3021]/20 hover:bg-[#FD3021]/30 border border-[#FD3021]/50 text-[#FD3021]-200 font-semibold py-3 rounded-xl transition mb-4"
           >
             {showMore ? '▲ View Less' : '▼ View More'}
           </button>
@@ -366,8 +366,8 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
               </span>
             )}
             {profile.balance.total_balance_usd > 50000 && (
-              <span className="bg-purple-500 bg-opacity-20 text-purple-300 px-4 py-2 rounded-full text-sm font-semibold">
-                💎 Whale
+              <span className="bg-[#FD3021] bg-opacity-20 text-[#FD3021]-300 px-4 py-2 rounded-full text-sm font-semibold">
+                🐋 Whale
               </span>
             )}
           </div>
@@ -387,7 +387,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ profile, onSwipe }) => {
         </motion.button>
         <motion.button
           onClick={() => handleButtonSwipe('right')}
-          className="bg-green-500 hover:bg-green-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition glow-green pulse-glow"
+          className="bg-[#22c55e] hover:bg-[#16a34a] text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition glow-pink pulse-glow"
           whileHover={{ scale: 1.2, rotate: 10 }}
           whileTap={{ scale: 0.85, rotate: 20 }}
           disabled={exitDirection !== null}

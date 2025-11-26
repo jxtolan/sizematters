@@ -189,7 +189,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
       animate={{ opacity: 1 }}
     >
       <motion.div
-        className="glass max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-3xl border border-purple-500/30"
+        className="glass max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-3xl border border-[#FD3021]/30"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
       >
@@ -222,7 +222,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
               onChange={(e) => setBio(e.target.value)}
               disabled={!isEditing}
               placeholder="Tell us about your trading style..."
-              className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none disabled:opacity-60"
+              className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#FD3021] resize-none disabled:opacity-60"
               rows={4}
               maxLength={300}
             />
@@ -238,7 +238,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               disabled={!isEditing}
-              className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500 disabled:opacity-60"
+              className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white focus:outline-none focus:border-[#FD3021] disabled:opacity-60"
             >
               <option value="">Select your country...</option>
               {COUNTRIES.map(c => (
@@ -260,7 +260,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
               onChange={(e) => setAssetChoice(e.target.value)}
               disabled={!isEditing}
               placeholder="e.g., SOL, BTC, ETH, Memecoins..."
-              className="w-full p-4 bg-gray-800 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 disabled:opacity-60"
+              className="w-full p-4 bg-gray-800 border border-[#FD3021]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#FD3021] disabled:opacity-60"
               maxLength={50}
             />
           </div>
@@ -276,7 +276,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
               onChange={(e) => setFavouriteCT(e.target.value)}
               disabled={!isEditing}
               placeholder="@username"
-              className="w-full p-4 bg-gray-800 border border-green-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-green-500 disabled:opacity-60"
+              className="w-full p-4 bg-gray-800 border border-[#CEB6BD]/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#CEB6BD] disabled:opacity-60"
               maxLength={50}
             />
           </div>
@@ -366,7 +366,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 rounded-xl transition glow-purple disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-gradient-to-r from-[#FD3021] to-[#CEB6BD] hover:from-[#FF4030] hover:to-[#D8C0C7] text-white font-bold py-4 rounded-xl transition glow-coral disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <FiSave /> {saving ? 'Saving...' : 'Save Changes'}
                 </button>

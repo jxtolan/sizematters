@@ -166,7 +166,7 @@ export const Chat: React.FC<ChatProps> = ({
         >
           <FiArrowLeft className="text-2xl" />
         </button>
-        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-green-500 rounded-full"></div>
+        <div className="w-10 h-10 bg-gradient-to-br from-[#FD3021] to-[#FF6B5B] rounded-full"></div>
         <div>
           <p className="text-white font-semibold">
             Trader {formatWallet(otherWallet)}
@@ -195,7 +195,7 @@ export const Chat: React.FC<ChatProps> = ({
                 <div
                   className={`max-w-[70%] rounded-2xl px-4 py-3 ${
                     isOwnMessage
-                      ? 'bg-gradient-to-r from-purple-500 to-green-500 text-white'
+                      ? 'bg-gradient-to-r from-[#FD3021] to-[#FF6B5B] text-white'
                       : 'bg-gray-800 text-white'
                   }`}
                 >
@@ -231,7 +231,7 @@ export const Chat: React.FC<ChatProps> = ({
               sendMessage()
             }}
             disabled={!newMessage.trim()}
-            className="bg-gradient-to-r from-purple-500 to-green-500 px-6 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
+            className="bg-gradient-to-r from-[#FD3021] to-[#FF6B5B] px-6 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
           >
             <FiSend className="text-xl" />
           </button>

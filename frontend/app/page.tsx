@@ -158,11 +158,10 @@ export default function Home() {
 
   if (!connected) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-green-900 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: 'var(--color-bg-dark)' }}>
         <Toaster />
         <div className="text-center relative z-10">
           <div className="mb-8">
-            <div className="text-9xl mb-6 animate-pulse">💎</div>
             <h1 className="text-7xl font-bold mb-6 gradient-text">
               SizeMatters
             </h1>
@@ -173,7 +172,7 @@ export default function Home() {
           <div className="mb-8">
             <WalletMultiButton />
           </div>
-          <div className="mt-8 space-y-3 text-gray-300 glass p-6 rounded-2xl inline-block border border-purple-500/30">
+          <div className="mt-8 space-y-3 text-gray-300 glass p-6 rounded-2xl inline-block border border-[#FD3021]/30">
             <p className="flex items-center gap-3 text-lg"><span className="text-2xl">🔥</span> Swipe through elite traders</p>
             <p className="flex items-center gap-3 text-lg"><span className="text-2xl">📊</span> Real-time Nansen PnL data</p>
             <p className="flex items-center gap-3 text-lg"><span className="text-2xl">💬</span> Connect & strategize together</p>
@@ -184,14 +183,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-green-900">
+    <div className="min-h-screen" style={{ background: 'var(--color-bg-dark)' }}>
       <Toaster />
       
       {/* Header */}
-      <div className="glass border-b-2 border-purple-500/30 relative z-10">
+      <div className="glass border-b-2 border-[#FD3021]/30 relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <span className="text-4xl">💎</span>
             <h1 className="text-3xl font-bold gradient-text">
               SizeMatters
             </h1>
@@ -200,7 +198,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowMyProfile(true)}
-              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 text-purple-200 rounded-lg transition font-semibold"
+              className="px-4 py-2 bg-[#FD3021]/20 hover:bg-[#FD3021]/30 border border-[#FD3021]/50 text-[#FBFFFE] rounded-lg transition font-semibold"
             >
               👤 My Profile
             </button>
@@ -230,7 +228,7 @@ export default function Home() {
                 type="password"
                 value={nansenApiKey}
                 onChange={(e) => setNansenApiKey(e.target.value)}
-                className="w-full px-4 py-3 glass border-2 border-purple-500/50 rounded-xl text-white focus:outline-none focus:border-cyan-500 focus:glow-cyan transition"
+                className="w-full px-4 py-3 glass border-2 border-[#FD3021]/50 rounded-xl text-white focus:outline-none focus:border-[#FF6B5B] focus:glow-coral transition"
                 placeholder="Enter your Nansen API key..."
               />
               <p className="text-xs text-gray-400 mt-2">
@@ -240,7 +238,7 @@ export default function Home() {
             <div className="flex gap-3">
               <button
                 onClick={saveNansenApiKey}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-cyan-500 py-3 rounded-xl font-bold hover:scale-105 glow-purple transition-all"
+                className="flex-1 bg-gradient-to-r from-[#FD3021] to-[#FF6B5B] py-3 rounded-xl font-bold hover:scale-105 glow-coral transition-all"
               >
                 💾 Save
               </button>
@@ -262,7 +260,7 @@ export default function Home() {
             onClick={() => setView('swipe')}
             className={`flex-1 py-3 rounded-xl font-semibold transition ${
               view === 'swipe'
-                ? 'bg-gradient-to-r from-purple-500 to-green-500'
+                ? 'bg-gradient-to-r from-[#FD3021] to-[#FF6B5B]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -272,7 +270,7 @@ export default function Home() {
             onClick={() => setView('matches')}
             className={`flex-1 py-3 rounded-xl font-semibold transition ${
               view === 'matches'
-                ? 'bg-gradient-to-r from-purple-500 to-green-500'
+                ? 'bg-gradient-to-r from-[#FD3021] to-[#FF6B5B]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -289,7 +287,7 @@ export default function Home() {
         {view === 'swipe' ? (
           loading ? (
             <div className="text-center text-white">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#FD3021] mx-auto mb-4"></div>
               <p>Loading profiles...</p>
             </div>
           ) : profiles.length > 0 && currentProfileIndex < profiles.length ? (
@@ -306,7 +304,7 @@ export default function Home() {
               </p>
               <button
                 onClick={loadProfiles}
-                className="bg-gradient-to-r from-purple-500 to-green-500 px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+                className="bg-gradient-to-r from-[#FD3021] to-[#FF6B5B] px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
                 Reload Profiles
               </button>
