@@ -11,6 +11,7 @@ import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
 import { getAuthHeaders, clearSessionToken } from '@/utils/auth'
+import Image from 'next/image'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -190,8 +191,14 @@ export default function Home() {
       <div className="glass border-b-2 border-[#FD3021]/30 relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 flex items-center justify-center">
-              <span className="text-5xl" style={{ color: 'var(--color-coral)' }}>🦍</span>
+            <div className="w-16 h-16 flex items-center justify-center">
+              <Image 
+                src="/logo.png" 
+                alt="SizeMatters Logo" 
+                width={64} 
+                height={64}
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold gradient-text">
               SizeMatters

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { FiX, FiEdit2, FiSave } from 'react-icons/fi'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { getAuthHeaders } from '@/utils/auth'
+import Image from 'next/image'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -195,7 +196,14 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
       >
         {/* Logo */}
         <div className="flex items-center justify-center mb-4">
-          <span className="text-7xl" style={{ color: 'var(--color-coral)' }}>🦍</span>
+          <Image 
+            src="/logo.png" 
+            alt="SizeMatters Logo" 
+            width={104} 
+            height={104}
+            className="object-contain"
+            style={{ width: '104px', height: '104px' }}
+          />
         </div>
         
         {/* Header */}
