@@ -190,6 +190,9 @@ export default function Home() {
       <div className="glass border-b-2 border-[#FD3021]/30 relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
+            <div className="w-12 h-12 flex items-center justify-center">
+              <span className="text-5xl" style={{ color: 'var(--color-coral)' }}>🦍</span>
+            </div>
             <h1 className="text-3xl font-bold gradient-text">
               SizeMatters
             </h1>

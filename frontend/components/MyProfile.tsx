@@ -193,6 +193,11 @@ export const MyProfile: React.FC<MyProfileProps> = ({ walletAddress, onClose }) 
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
       >
+        {/* Logo */}
+        <div className="flex items-center justify-center mb-4">
+          <span className="text-7xl" style={{ color: 'var(--color-coral)' }}>🦍</span>
+        </div>
+        
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>

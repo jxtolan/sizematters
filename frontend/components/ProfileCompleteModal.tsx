@@ -163,7 +163,10 @@ export const ProfileCompleteModal: React.FC<ProfileCompleteModalProps> = ({ wall
         animate={{ scale: 1, y: 0 }}
       >
         <div className="mb-6">
-          <h2 className="text-3xl font-bold gradient-text mb-2">
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-7xl" style={{ color: 'var(--color-coral)' }}>🦍</span>
+          </div>
+          <h2 className="text-3xl font-bold gradient-text mb-2 text-center">
             Complete Your Profile ✨
           </h2>
           <p className="text-gray-400">
