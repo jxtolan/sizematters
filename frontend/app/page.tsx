@@ -9,7 +9,7 @@ import { ProfileCompleteModal } from '@/components/ProfileCompleteModal'
 import { MyProfile } from '@/components/MyProfile'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
-import { FiHeart, FiMessageCircle, FiSettings } from 'react-icons/fi'
+import { FiHeart, FiMessageCircle } from 'react-icons/fi'
 import { getAuthHeaders, clearSessionToken } from '@/utils/auth'
 import Image from 'next/image'
 
@@ -162,12 +162,23 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: 'var(--color-bg-dark)' }}>
         <Toaster />
         <div className="text-center relative z-10">
+          {/* Logo */}
+          <div className="mb-8 flex justify-center">
+            <Image 
+              src="/logo.png" 
+              alt="SizeMatters Logo" 
+              width={200} 
+              height={200}
+              className="w-48 h-48 object-contain glow-coral animate-pulse-slow"
+            />
+          </div>
+          
           <div className="mb-8">
             <h1 className="text-7xl font-bold mb-6 gradient-text">
               SizeMatters
             </h1>
             <p className="text-2xl text-gray-200 mb-8 font-medium">
-              Where whales flirt through PnL 🐋✨
+              Don't let the big ones scare you
             </p>
           </div>
           <div className="mb-8">
@@ -211,12 +222,6 @@ export default function Home() {
               className="px-4 py-2 bg-[#FD3021]/20 hover:bg-[#FD3021]/30 border border-[#FD3021]/50 text-[#FBFFFE] rounded-lg transition font-semibold"
             >
               👤 My Profile
-            </button>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-gray-800 rounded-lg transition"
-            >
-              <FiSettings className="text-2xl text-gray-300" />
             </button>
             <WalletMultiButton />
           </div>
